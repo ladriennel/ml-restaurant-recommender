@@ -1,5 +1,5 @@
 import React from 'react';
-import Button from '../components/Button'
+import Button from '@/components/Button'
 
 export default function Home() {
   return (
@@ -9,7 +9,7 @@ export default function Home() {
 
         <div className="flex flex-col justify-center basis-1/3 pr-32 pl-32">
           <h1 className="text-foreground-1 text-right">Taste<br />Point</h1>
-          <h2 className="text-foreground-1 pt-4 text-right">find the<br />restaurants<br />that suit your<br />ravings</h2>
+          <h2 className="text-foreground-1 pt-4 text-right">find the<br />restaurants<br />that suit your<br />cravings</h2>
         </div>
 
         <div className="flex flex-col gap-8 justify-center items-center bg-background-2 basis-2/3">
