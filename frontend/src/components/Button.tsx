@@ -30,7 +30,7 @@ export default function Button({
 
   const baseStyles = 'text-foreground-2 transition cursor-pointer';
   const primaryStyles =
-    'w-[185px] h-[50px] bg-background-2 rounded-border-radius shadow-box-shadow';
+    'w-[185px] h-[50px] bg-background-2 hover:bg-background-3 rounded-border-radius shadow-box-shadow';
   const secondaryStyles = 'underline';
 
   const combinedStyles = `${baseStyles} ${variant === 'primary' ? primaryStyles : secondaryStyles

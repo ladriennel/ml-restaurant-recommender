@@ -27,7 +27,11 @@ export default function RestaurantInsert() {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 bg-[rgba(215,228,230,0.8)] flex flex-col gap-68 items-center justify-center">
+                <div className="fixed inset-0 z-50 pb-58 bg-[rgba(215,228,230,0.9)] flex flex-col gap-2 items-center justify-center">
+                    <Button onClick={() => setIsModalOpen(false)} variant='secondary'>
+                        <p>Close</p>
+                    </Button>
+
                     <SearchBar
                         placeholder="Search restaurants"
                         onSearch={async (query) => {
@@ -56,9 +60,7 @@ export default function RestaurantInsert() {
                         onSelect={handleSelect}
                     />
 
-                    <Button onClick={() => setIsModalOpen(false)}>
-                        <p>Close</p>
-                    </Button>
+                    
                 </div>
             )}
         </>
