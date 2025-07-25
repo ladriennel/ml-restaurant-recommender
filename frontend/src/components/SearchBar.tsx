@@ -4,29 +4,62 @@ import React, { useState, useRef, useEffect } from 'react';
 
 type SearchBarProps = {
   placeholder?: string;
-  onSearch: (query: string) => Promise<string[]>; // API handler should return 6 suggestions
+  onSearch: (query: string) => Promise<string[]>;
   onSelect: (selected: string) => void;
 };
 
 export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }: SearchBarProps) {
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [isFocused, setIsFocused] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [results, setResults] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
+  const [cache, setCache] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
-    if (query.trim() === '') {
-      setSuggestions([]);
+    if (isSelected) {
+      setIsSelected(false);
       return;
     }
+    const timeout = setTimeout(async () => {
+      if (query.length >= 1) { 
+        if (cache[query]) {
+          setResults(cache[query]);
+          setShowDropdown(true);
+          return;
+        }
+        setLoading(true);
+        setShowDropdown(true); 
+        try {
+          const res = await onSearch(query);
+          setResults(res);
+          setCache(prev => ({ ...prev, [query]: res }));
+        } catch (error) {
+          console.error('Search error:', error);
+          setResults([]);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // Clear results and hide dropdown for empty queries
+        setResults([]);
+        setShowDropdown(false);
+        setLoading(false);
+      }
+    }, 800); // debounce
 
-    // Debounce API calls
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(async () => {
-      const results = await onSearch(query);
-      setSuggestions(results.slice(0, 6));
-    }, 300);
-  }, [query, onSearch]);
+    return () => clearTimeout(timeout);
+  }, [query]);
+
+  const handleSelect = (result: string) => {
+    onSelect(result);
+    setQuery(result);
+    setResults([]);
+    setShowDropdown(false);
+    setIsSelected(true);
+  };
+
+  const baseStyle = 'text-base text-foreground-2 px-4 py-2 hover:bg-background-3 truncate overflow-x-auto cursor-pointer';
 
   return (
     <div className="relative w-full max-w-md pt-4">
@@ -34,28 +67,30 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
         type="text"
         value={query}
         placeholder={placeholder}
-        onChange={(e) => setQuery(e.target.value)}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setTimeout(() => setIsFocused(false), 150)} // delay to allow click
+        onChange={(e) => {
+          setQuery(e.target.value)
+          if (isSelected) setIsSelected(false);
+        }}
         className="text-base text-foreground-2 w-full h-[50px] pl-4 pr-4 pt-2 pb-2 bg-background-2 rounded-border-radius shadow-box-shadow focus:outline-none"
       />
 
-      {isFocused && suggestions.length > 0 && (
+      {showDropdown && query.length >= 1 && (
         <ul className="absolute z-10 mt-1 w-full bg-background-2 rounded-border-radius shadow-box-shadow overflow-y-auto">
-          {suggestions.map((suggestion, index) => (
-            <li
-              key={index}
-              className="text-base text-foreground-2 px-4 py-2 hover:bg-background-3 truncate overflow-x-auto cursor-pointer"
-              onMouseDown={() => {
-                setQuery(suggestion);
-                setIsFocused(false);
-                setSuggestions([]);
-                onSelect(suggestion);
-              }}
-            >
-              {suggestion}
-            </li>
-          ))}
+          {loading ? (
+            <li className={`${baseStyle}`}>Loading</li>
+          ) : results.length === 0 ? (
+            <li className={`${baseStyle}`}>No results found</li>
+          ) : (
+            results.map((result, i) => (
+              <li
+                key={i}
+                className={`${baseStyle}`}
+                onClick={() => handleSelect(result)}
+              >
+                {result}
+              </li>
+            ))
+          )}
         </ul>
       )}
     </div>

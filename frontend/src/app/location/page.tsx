@@ -15,7 +15,7 @@ export default function Location() {
             <h3 className="text-foreground-2 text-center pt-8 underline">
                 {selectedLocation ? selectedLocation : 'Somewhere, Tasty'}
             </h3>
-            <SearchBar
+            {/*<SearchBar
                 placeholder="Search locations"
                 onSearch={async (query) => {
                     const mockData = [
@@ -41,19 +41,24 @@ export default function Location() {
                     });
                 }}
                 onSelect={(location) => setSelectedLocation(location)}
-            />
+            />*/}
 
-            {/*
-                
-                <SearchBar
+            
+            <SearchBar
                 placeholder="Search Location"
                 onSearch={async (query) => {
-                // Example: call your restaurant or location API
-                    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-                    const data = await res.json();
-                    return data.results; // assume this is string[] or adapt
-                }}
-            />*/}
+                    try {
+                      const res = await fetch(`http://localhost:8000/api/locations?query=${encodeURIComponent(query)}`);
+                      if (!res.ok) throw new Error("Network error");
+                      const data = await res.json();
+                      return data; 
+                    } catch (err) {
+                      console.error(err);
+                      return [];
+                    }
+                  }}
+                  onSelect={(location) => setSelectedLocation(location)}
+            />
             <div className="flex flex-col pt-12 gap-4">
                 
                 <Button href="/restaurants">

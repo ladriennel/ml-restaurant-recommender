@@ -1,7 +1,9 @@
 from pydantic import BaseModel
+from typing import List, Optional
 
 class LocationBase(BaseModel):
-    name: str
+    city: str
+    region:str
     country: str
 
 class Location(LocationBase):
@@ -11,8 +13,13 @@ class Location(LocationBase):
 
 class RestaurantBase(BaseModel):
     name: str
-    cuisine: str
-    price: str
+    categories: List[str]
+    price: Optional[str]
+    rating: float
+    review_count: int
+    url: str
+    tags: Optional[List[str]] = []
+    review_snippets: Optional[List[str]] = []  # For ML later
     location_id: int
 
 class Restaurant(RestaurantBase):
