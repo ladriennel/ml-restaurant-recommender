@@ -44,6 +44,8 @@ async def search_locations(query: str = Query(..., min_length=1)) -> List[str]:
         params = {
             "namePrefix": query,
             "types": "CITY",
+            "minPopulation":1000,
+            "sort": "-population",
         }
 
         try:
@@ -62,10 +64,18 @@ async def search_locations(query: str = Query(..., min_length=1)) -> List[str]:
                 return JSONResponse(status_code=500, content={"error": "GeoDB API failure"})
 
             data = response.json()
-            results = [
-                f"{city['city']}, {city['region']}, {city['countryCode']}"
-                for city in data.get("data", [])
-            ]
+            results = []
+            for city in data.get("data", []):
+                city_name = city.get('city', 'Unknown City')
+                region = city.get('region', city.get('regionCode', ''))
+                country = city.get('countryCode', city.get('country', ''))
+                
+                if region:
+                    formatted_city = f"{city_name}, {region}, {country}"
+                else:
+                    formatted_city = f"{city_name}, {country}"
+                    
+                results.append(formatted_city)
             cache[query] = results
             return results
 
