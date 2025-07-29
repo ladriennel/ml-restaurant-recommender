@@ -18,38 +18,9 @@ export default function Location() {
         <div className="min-h-screen ml-8 mr-8 md:ml-32 md:mr-32 lg:ml-64 lg:mr-64 flex flex-col justify-center items-center">
             <h1 className="text-foreground-1 text-center">Taste<br />Point</h1>
             <h2 className="text-foreground-1 text-center">What do you want to eat?</h2>
-            {/*Placeholder for dynamic text */}
             <h3 className="text-foreground-2 text-center pt-8 underline">
                 {selectedLocation ? selectedLocation.name : 'Somewhere, Tasty'}
             </h3>
-            {/*<SearchBar
-                placeholder="Search locations"
-                onSearch={async (query) => {
-                    const mockData = [
-                        'Dallas, Texas',
-                        'London, England',
-                        'Taipei, Taiwan',
-                        'New York City, New York',
-                        'Brooklyn, New York',
-                        'Ithaca, New York',
-                        'Los Angeles, California',
-                        'Paris, France',
-                        'Cambridge, Massachusetts',
-                        'Shanghai, China'
-                    ];
-
-                    return new Promise<string[]>((resolve) => {
-                        setTimeout(() => {
-                            const filtered = mockData.filter((name) =>
-                                name.toLowerCase().includes(query.toLowerCase())
-                            );
-                            resolve(filtered.slice(0, 6));
-                        }, 300); // simulate network latency
-                    });
-                }}
-                onSelect={(location) => setSelectedLocation(location)}
-            />*/}
-
             
             <SearchBar
                 placeholder="Search Location"

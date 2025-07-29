@@ -55,34 +55,6 @@ export default function RestaurantInsert({
                         <p>Close</p>
                     </Button>
 
-                    {/*<SearchBar
-                        placeholder="Search restaurants"
-                        onSearch={async (query) => {
-                            const mockData = [
-                                'The French Laundry',
-                                'Le Bernardin',
-                                'Noma',
-                                'Eleven Madison Park',
-                                'Osteria Francescana',
-                                'Alinea',
-                                'Gaggan Anand',
-                                'Blue Hill at Stone Barns',
-                                'Sukiyabashi Jiro',
-                                'Pujol'
-                            ];
-
-                            return new Promise<string[]>((resolve) => {
-                                setTimeout(() => {
-                                    const filtered = mockData.filter((name) =>
-                                        name.toLowerCase().includes(query.toLowerCase())
-                                    );
-                                    resolve(filtered.slice(0, 6));
-                                }, 300); 
-                            });
-                        }}
-                        onSelect={handleSelect}
-                    />*/}
-
                     <SearchBar
                         placeholder="Search restaurants"
                         onSearch={async (query) => {
