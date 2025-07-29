@@ -4,8 +4,15 @@ import { useState } from 'react';
 import Button from '@/components/Button'
 import SearchBar from '@/components/SearchBar';
 
+type LocationData = {
+    name: string;
+    latitude: number;
+    longitude: number;
+};
+
 export default function Location() {
-    const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [locationOptions, setLocationOptions] = useState<LocationData[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
 
     return (
         <div className="min-h-screen ml-8 mr-8 md:ml-32 md:mr-32 lg:ml-64 lg:mr-64 flex flex-col justify-center items-center">
@@ -13,7 +20,7 @@ export default function Location() {
             <h2 className="text-foreground-1 text-center">What do you want to eat?</h2>
             {/*Placeholder for dynamic text */}
             <h3 className="text-foreground-2 text-center pt-8 underline">
-                {selectedLocation ? selectedLocation : 'Somewhere, Tasty'}
+                {selectedLocation ? selectedLocation.name : 'Somewhere, Tasty'}
             </h3>
             {/*<SearchBar
                 placeholder="Search locations"
@@ -50,14 +57,22 @@ export default function Location() {
                     try {
                       const res = await fetch(`http://localhost:8000/api/locations?query=${encodeURIComponent(query)}`);
                       if (!res.ok) throw new Error("Network error");
-                      const data = await res.json();
-                      return data; 
+                      const data: LocationData[] = await res.json();
+                      setLocationOptions(data); 
+                      return data.map((loc) => loc.name);
                     } catch (err) {
                       console.error(err);
                       return [];
                     }
                   }}
-                  onSelect={(location) => setSelectedLocation(location)}
+                  onSelect={(selectedName) => {
+                    const matched = locationOptions.find((loc) => loc.name === selectedName);
+                    if (matched) {
+                      setSelectedLocation(matched);
+                    } else {
+                      console.warn('No location found for selected name');
+                    }
+                  }}
             />
             <div className="flex flex-col pt-12 gap-4">
                 

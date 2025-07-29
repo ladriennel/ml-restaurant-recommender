@@ -18,7 +18,6 @@ class Restaurant(Base):
     categories = Column(JSON) 
     price = Column(String)
     rating = Column(Float) 
-    review_count = Column(Integer) 
     url = Column(String) 
     tags = Column(JSON)  
     review_snippets = Column(JSON) 

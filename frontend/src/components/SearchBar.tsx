@@ -15,6 +15,9 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [cache, setCache] = useState<Record<string, string[]>>({});
+  const [error, setError] = useState<string | null>(null);
+
+  const currentRequestRef = useRef<number>(0);
 
   useEffect(() => {
     if (isSelected) {
@@ -23,33 +26,49 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
     }
     const timeout = setTimeout(async () => {
       if (query.length >= 1) { 
+        setError(null);
+
         if (cache[query]) {
           setResults(cache[query]);
           setShowDropdown(true);
           return;
         }
+
         setLoading(true);
         setShowDropdown(true); 
+
+        const requestId = ++currentRequestRef.current;
         try {
           const res = await onSearch(query);
-          setResults(res);
-          setCache(prev => ({ ...prev, [query]: res }));
+          if (requestId === currentRequestRef.current) {
+            setResults(res);
+            setCache(prev => ({ ...prev, [query]: res }));
+            setError(null);
+          }
         } catch (error) {
-          console.error('Search error:', error);
-          setResults([]);
+          if (requestId === currentRequestRef.current) {
+            console.error('Search error:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Search failed';
+            setError(errorMessage);
+            setResults([]);
+          }
         } finally {
-          setLoading(false);
+          if (requestId === currentRequestRef.current) {
+            setLoading(false);
+          }
         }
       } else {
         // Clear results and hide dropdown for empty queries
         setResults([]);
         setShowDropdown(false);
         setLoading(false);
+        setError(null);
+        currentRequestRef.current++;
       }
     }, 800); // debounce
 
     return () => clearTimeout(timeout);
-  }, [query]);
+  }, [query, cache, onSearch]);
 
   const handleSelect = (result: string) => {
     onSelect(result);
@@ -57,6 +76,7 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
     setResults([]);
     setShowDropdown(false);
     setIsSelected(true);
+    setError(null);
   };
 
   const baseStyle = 'text-base text-foreground-2 px-4 py-2 hover:bg-background-3 truncate overflow-x-auto cursor-pointer';
@@ -78,6 +98,8 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
         <ul className="absolute z-10 mt-1 w-full bg-background-2 rounded-border-radius shadow-box-shadow overflow-y-auto">
           {loading ? (
             <li className={`${baseStyle}`}>Loading</li>
+          ) : error ? (
+            <li className={`${baseStyle} text-red-500`}>{error}</li>
           ) : results.length === 0 ? (
             <li className={`${baseStyle}`}>No results found</li>
           ) : (
@@ -87,7 +109,15 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
                 className={`${baseStyle}`}
                 onClick={() => handleSelect(result)}
               >
-                {result}
+                
+                  {result.includes('\n') ? (
+                    <>
+                      <div className="font-bold truncate">{result.split('\n')[0]}</div>
+                      <div className="text-sm truncate">{result.split('\n')[1]}</div>
+                    </>
+                  ) : (
+                    result
+                  )}
               </li>
             ))
           )}

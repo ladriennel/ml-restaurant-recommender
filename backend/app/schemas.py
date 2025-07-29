@@ -16,7 +16,6 @@ class RestaurantBase(BaseModel):
     categories: List[str]
     price: Optional[str]
     rating: float
-    review_count: int
     url: str
     tags: Optional[List[str]] = []
     review_snippets: Optional[List[str]] = []  # For ML later

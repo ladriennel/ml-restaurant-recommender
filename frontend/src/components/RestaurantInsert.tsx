@@ -4,14 +4,37 @@ import React, { useState } from 'react';
 import SearchBar from './SearchBar';
 import Button from './Button';
 
-export default function RestaurantInsert() {
-    const [selectedRestaurant, setSelectedRestaurant] = useState<string | null>(null);
+type Restaurant = {
+    name: string;
+    categories: string[];
+    categorySet: number[];
+    address: string;
+};
+
+type RestaurantInsertProps = {
+    index: number;
+    selectedRestaurant: Restaurant | null;
+    onSelect: (index: number, restaurant: Restaurant) => void;
+  };
+
+export default function RestaurantInsert({
+    index,
+    selectedRestaurant,
+    onSelect,
+  }: RestaurantInsertProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const handleSelect = (restaurant: string) => {
-        setSelectedRestaurant(restaurant);
+    const handleSelect = (restaurantString: string) => {
+        const [name, address] = restaurantString.split('\n');
+        const restaurant: Restaurant = {
+          name,
+          address,
+          categories: [],
+          categorySet: [],
+        };
+        onSelect(index, restaurant);
         setIsModalOpen(false);
-    };
+      };
 
     return (
         <>
@@ -20,7 +43,7 @@ export default function RestaurantInsert() {
                 onClick={() => setIsModalOpen(true)}
             >
                 {selectedRestaurant ? (
-                    <p className="text-left text-foreground-2 text-base">{selectedRestaurant}</p>
+                    <p className="text-left text-foreground-2 text-base">{selectedRestaurant.name}</p>
                 ) : (
                     <p className="text-center text-foreground-2 text-base">Choose a restaurant</p>
                 )}
@@ -32,7 +55,7 @@ export default function RestaurantInsert() {
                         <p>Close</p>
                     </Button>
 
-                    <SearchBar
+                    {/*<SearchBar
                         placeholder="Search restaurants"
                         onSearch={async (query) => {
                             const mockData = [
@@ -56,6 +79,33 @@ export default function RestaurantInsert() {
                                     resolve(filtered.slice(0, 6));
                                 }, 300); 
                             });
+                        }}
+                        onSelect={handleSelect}
+                    />*/}
+
+                    <SearchBar
+                        placeholder="Search restaurants"
+                        onSearch={async (query) => {
+                            try {
+                                const res = await fetch(`http://localhost:8000/api/restaurants/search?query=${encodeURIComponent(query)}`);
+                                
+                                if (!res.ok) {
+                                    if (res.status === 429) {
+                                        throw new Error("Rate limit exceeded. Please slow down your typing.");
+                                    }
+                                    throw new Error(`API error: ${res.status}`);
+                                }
+                                
+                                const restaurants: Restaurant[] = await res.json();
+                                
+                                // Convert restaurant objects to display strings for SearchBar
+                                return restaurants.slice(0, 6).map((restaurant) => `${restaurant.name}\n${restaurant.address}`);
+                                
+                            } catch (err) {
+                                console.error('Restaurant search error:', err);
+                                // Return empty array on error so SearchBar shows "No results found"
+                                return [];
+                            }
                         }}
                         onSelect={handleSelect}
                     />

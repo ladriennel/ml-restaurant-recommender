@@ -3,9 +3,8 @@ from fastapi.responses import JSONResponse
 import requests
 import os
 from dotenv import load_dotenv
-from typing import List
+from typing import List, Dict
 import time
-import asyncio
 from threading import Lock
 
 load_dotenv()
@@ -21,7 +20,7 @@ MIN_REQUEST_INTERVAL = 1.2
 request_lock = Lock()
 
 @router.get("/locations")
-async def search_locations(query: str = Query(..., min_length=1)) -> List[str]:
+async def search_locations(query: str = Query(..., min_length=1)) -> List[Dict]:
 
     global last_request_time
     
@@ -29,12 +28,12 @@ async def search_locations(query: str = Query(..., min_length=1)) -> List[str]:
     if query in cache:
         return cache[query]
     
-    async with asyncio.Lock():  # FastAPI async lock for concurrency safety
+    with request_lock: 
         current_time = time.time()
-        time_since_last_request = current_time - last_request_time
+        elapsed = current_time - last_request_time
 
-        if time_since_last_request < MIN_REQUEST_INTERVAL:
-            await asyncio.sleep(MIN_REQUEST_INTERVAL - time_since_last_request)
+        if elapsed < MIN_REQUEST_INTERVAL:
+            time.sleep(MIN_REQUEST_INTERVAL - elapsed)
 
         url = f"https://{GEODB_API_HOST}/v1/geo/cities"
         headers = {
@@ -75,7 +74,11 @@ async def search_locations(query: str = Query(..., min_length=1)) -> List[str]:
                 else:
                     formatted_city = f"{city_name}, {country}"
                     
-                results.append(formatted_city)
+                results.append({
+                    "name": formatted_city,
+                    "latitude": city.get("latitude"),
+                    "longitude": city.get("longitude"),
+                })
             cache[query] = results
             return results
 
