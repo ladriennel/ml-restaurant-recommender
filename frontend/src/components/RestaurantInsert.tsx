@@ -3,38 +3,43 @@
 import React, { useState } from 'react';
 import SearchBar from './SearchBar';
 import Button from './Button';
-
-type Restaurant = {
-    name: string;
-    categories: string[];
-    categorySet: number[];
-    address: string;
-};
+import { Restaurant } from '@/types';
 
 type RestaurantInsertProps = {
     index: number;
     selectedRestaurant: Restaurant | null;
     onSelect: (index: number, restaurant: Restaurant) => void;
-  };
+};
 
 export default function RestaurantInsert({
     index,
     selectedRestaurant,
     onSelect,
-  }: RestaurantInsertProps) {
+}: RestaurantInsertProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [restaurantOptions, setRestaurantOptions] = useState<Restaurant[]>([]);
 
     const handleSelect = (restaurantString: string) => {
         const [name, address] = restaurantString.split('\n');
-        const restaurant: Restaurant = {
-          name,
-          address,
-          categories: [],
-          categorySet: [],
-        };
-        onSelect(index, restaurant);
+        const fullRestaurant = restaurantOptions.find(r => r.name === name && r.address === address);
+
+        if (fullRestaurant) {
+            console.log('Selected restaurant (full data):', fullRestaurant);
+            onSelect(index, fullRestaurant);
+        } else {
+            // Fallback to basic data if not found
+            const basicRestaurant: Restaurant = {
+                name,
+                address,
+                categories: [],
+                categorySet: [],
+            };
+            console.log('Selected restaurant (fallback):', basicRestaurant);
+            onSelect(index, basicRestaurant);
+        }
+
         setIsModalOpen(false);
-      };
+    };
 
     return (
         <>
@@ -60,19 +65,20 @@ export default function RestaurantInsert({
                         onSearch={async (query) => {
                             try {
                                 const res = await fetch(`http://localhost:8000/api/restaurants/search?query=${encodeURIComponent(query)}`);
-                                
+
                                 if (!res.ok) {
                                     if (res.status === 429) {
                                         throw new Error("Rate limit exceeded. Please slow down your typing.");
                                     }
                                     throw new Error(`API error: ${res.status}`);
                                 }
-                                
+
                                 const restaurants: Restaurant[] = await res.json();
-                                
+                                setRestaurantOptions(restaurants);
+
                                 // Convert restaurant objects to display strings for SearchBar
                                 return restaurants.slice(0, 6).map((restaurant) => `${restaurant.name}\n${restaurant.address}`);
-                                
+
                             } catch (err) {
                                 console.error('Restaurant search error:', err);
                                 // Return empty array on error so SearchBar shows "No results found"
@@ -82,7 +88,7 @@ export default function RestaurantInsert({
                         onSelect={handleSelect}
                     />
 
-                    
+
                 </div>
             )}
         </>

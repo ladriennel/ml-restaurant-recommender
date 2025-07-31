@@ -1,27 +1,51 @@
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import datetime
 
-class LocationBase(BaseModel):
-    city: str
-    region:str
-    country: str
-
-class Location(LocationBase):
-    id: int
-    class Config:
-        orm_mode = True
+class Position(BaseModel):
+    lat: float
+    lon: float
 
 class RestaurantBase(BaseModel):
     name: str
-    categories: List[str]
-    price: Optional[str]
-    rating: float
-    url: str
-    tags: Optional[List[str]] = []
-    review_snippets: Optional[List[str]] = []  # For ML later
-    location_id: int
+    address: str
+    categories: List[str] = []
+    categorySet: List[int] = []
+    position: Optional[Position] = None
+
+class RestaurantCreate(RestaurantBase):
+    pass
 
 class Restaurant(RestaurantBase):
     id: int
+    search_id: int
+    
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class LocationBase(BaseModel):
+    name: str
+    latitude: float
+    longitude: float
+
+class LocationCreate(LocationBase):
+    pass
+
+class Location(LocationBase):
+    pass
+
+class SearchBase(BaseModel):
+    location: Optional[Location] = None
+    restaurants: List[Optional[RestaurantCreate]] = []
+
+class SearchCreate(SearchBase):
+    pass
+
+class SearchResponse(BaseModel):
+    id: int
+    location: Optional[Location] = None
+    restaurants: List[Optional[RestaurantCreate]] = []
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True

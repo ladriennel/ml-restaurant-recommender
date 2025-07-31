@@ -1,25 +1,33 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
-from .database import Base
+from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
 
+Base = declarative_base()
 
-class Location(Base):
-    __tablename__ = "locations"
+class Search(Base):
+    __tablename__ = "searches"
+    
     id = Column(Integer, primary_key=True, index=True)
-    city = Column(String, index=True)
-    region = Column(String)
-    country = Column(String)
-    restaurants = relationship("Restaurant", back_populates="location")
+    location_name = Column(String, nullable=True)
+    location_latitude = Column(Float, nullable=True)
+    location_longitude = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationship to restaurants
+    restaurants = relationship("Restaurant", back_populates="search", cascade="all, delete-orphan")
 
 class Restaurant(Base):
     __tablename__ = "restaurants"
+    
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    categories = Column(JSON) 
-    price = Column(String)
-    rating = Column(Float) 
-    url = Column(String) 
-    tags = Column(JSON)  
-    review_snippets = Column(JSON) 
-    location_id = Column(Integer, ForeignKey("locations.id"))
-    location = relationship("Location", back_populates="restaurants")
+    search_id = Column(Integer, ForeignKey("searches.id"), nullable=False)
+    name = Column(String, nullable=False)
+    address = Column(String, nullable=False)
+    categories = Column(Text, nullable=True)  # JSON string
+    category_set = Column(Text, nullable=True)  # JSON string
+    position_lat = Column(Float, nullable=True)
+    position_lon = Column(Float, nullable=True)
+    
+    # Relationship back to search
+    search = relationship("Search", back_populates="restaurants")

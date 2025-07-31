@@ -41,7 +41,7 @@ async def search_restaurants(query: str = Query(..., min_length=1)) -> List[Dict
             "limit": 10,
             "language":"en-US",
             "typeahead": True,
-            "categorySet": "7315",  # 7315 is the TomTom category for restaurants
+            "categorySet": "7315",  
         }
 
         try:
@@ -66,14 +66,21 @@ async def search_restaurants(query: str = Query(..., min_length=1)) -> List[Dict
             for result in data.get("results", []):
                 poi = result.get("poi", {})
                 address = result.get("address", {})
+                position = result.get("position", {})
                
                 restaurant = {
                     "name": poi.get("name", "Unknown Restaurant"),
                     "categories": poi.get("categories", []),
                     "categorySet": [cat.get("id") for cat in poi.get("categorySet", [])],
                     "address": address.get("freeformAddress", "Unknown location"),
-                    "position": result.get("position", {}),
                 }
+
+                if position:
+                    restaurant["position"] = {
+                        "lat": position.get("lat"),
+                        "lon": position.get("lon")
+                }
+                
                 results.append(restaurant)
 
             cache[query] = results
