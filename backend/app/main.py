@@ -21,6 +21,7 @@ app.include_router(location.router, prefix="/api", tags=["locations"])
 app.include_router(restaurant.router, prefix="/api", tags=["restaurants"])
 app.include_router(search.router, prefix="/api", tags=["searches"])
 
+
 @app.get("/")
 async def root():
     return {"message": "TastePoint is running"}

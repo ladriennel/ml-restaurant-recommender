@@ -78,6 +78,7 @@ async def search_locations(query: str = Query(..., min_length=1)) -> List[Dict]:
                     "name": formatted_city,
                     "latitude": city.get("latitude"),
                     "longitude": city.get("longitude"),
+                    "population": city.get('population', 0),
                 })
             cache[query] = results
             return results
