@@ -16,7 +16,7 @@ TOMTOM_BASE_URL = "https://api.tomtom.com/search/2/search"
 
 cache: Dict[str, List[Dict]] = {}
 last_request_time = 0
-MIN_REQUEST_INTERVAL = 1.2
+MIN_REQUEST_INTERVAL = 1
 request_lock = Lock()
 
 @router.get("/restaurants/search")
@@ -73,6 +73,7 @@ async def search_restaurants(query: str = Query(..., min_length=1)) -> List[Dict
                     "categories": poi.get("categories", []),
                     "categorySet": [cat.get("id") for cat in poi.get("categorySet", [])],
                     "address": address.get("freeformAddress", "Unknown location"),
+                    "tomtom_poi_id": result.get("id")
                 }
 
                 if position:

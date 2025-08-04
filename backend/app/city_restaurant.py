@@ -14,7 +14,7 @@ TOMTOM_BASE_URL = "https://api.tomtom.com/search/2/categorySearch"
 
 cache: Dict[str, List[Dict]] = {}
 last_request_time = 0
-MIN_REQUEST_INTERVAL = 1.2
+MIN_REQUEST_INTERVAL = 1
 request_lock = Lock()
 
 def calculate_city_radius(population: int) -> int:

@@ -12,6 +12,7 @@ class RestaurantBase(BaseModel):
     categories: List[str] = []
     categorySet: List[int] = []
     position: Optional[Position] = None
+    tomtom_poi_id: Optional[str] = None
 
 class RestaurantCreate(RestaurantBase):
     pass

@@ -36,6 +36,7 @@ async def create_search(search_data: SearchCreate, db: Session = Depends(get_db)
                     category_set=json.dumps(restaurant_data.categorySet) if restaurant_data.categorySet else None,
                     position_lat=restaurant_data.position.lat if restaurant_data.position else None,
                     position_lon=restaurant_data.position.lon if restaurant_data.position else None,
+                    tomtom_poi_id=restaurant_data.tomtom_poi_id if restaurant_data.tomtom_poi_id else None,
                 )
                 db.add(db_restaurant)
         
@@ -131,6 +132,7 @@ async def get_search(search_id: int, db: Session = Depends(get_db)):
             "address": restaurant.address,
             "categories": json.loads(restaurant.categories) if restaurant.categories else [],
             "categorySet": json.loads(restaurant.category_set) if restaurant.category_set else [],
+            "tomtom_poi_id": restaurant.tomtom_poi_id,
         }
         if restaurant.position_lat and restaurant.position_lon:
             restaurant_dict["position"] = {
@@ -190,6 +192,7 @@ async def get_all_searches(db: Session = Depends(get_db)):
                 "address": restaurant.address,
                 "categories": json.loads(restaurant.categories) if restaurant.categories else [],
                 "categorySet": json.loads(restaurant.category_set) if restaurant.category_set else [],
+                "tomtom_poi_id": restaurant.tomtom_poi_id,
             }
             if restaurant.position_lat and restaurant.position_lon:
                 restaurant_dict["position"] = {

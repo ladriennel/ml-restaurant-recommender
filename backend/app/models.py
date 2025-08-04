@@ -31,6 +31,7 @@ class Restaurant(Base):
     category_set = Column(Text, nullable=True)  
     position_lat = Column(Float, nullable=True)
     position_lon = Column(Float, nullable=True)
+    tomtom_poi_id = Column(String, nullable=True)
     
     # Relationship back to search
     search = relationship("Search", back_populates="restaurants")

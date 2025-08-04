@@ -7,6 +7,7 @@ export type Restaurant = {
       lat: number;
       lon: number;
     };
+    tomtom_poi_id?: string;
   };
 
   export type CityRestaurant = {
