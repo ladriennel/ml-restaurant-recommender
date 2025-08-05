@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 import time
 from typing import List, Dict
 from threading import Lock
+import logging
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -49,17 +52,15 @@ async def search_restaurants(query: str = Query(..., min_length=1)) -> List[Dict
             last_request_time = time.time()
 
             if response.status_code == 429:
-                return JSONResponse(
-                    status_code=429,
-                    content={"error": "Rate limit exceeded. Please slow down your typing."}
-                )
+                logger.warning("Rate limited for city restaurant search")
+                # Return empty list instead of JSONResponse
+                return []
 
             if response.status_code != 200:
-                return JSONResponse(
-                    status_code=500,
-                    content={"error": f"TomTom API error: {response.status_code}"}
-                )
-
+                logger.error(f"TomTom API error for city search: {response.status_code}")
+                # Return empty list instead of JSONResponse
+                return []
+            
             data = response.json()
             
             results = []
@@ -90,5 +91,5 @@ async def search_restaurants(query: str = Query(..., min_length=1)) -> List[Dict
         except requests.exceptions.Timeout:
             return JSONResponse(status_code=500, content={"error": "API timeout"})
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            logger.error(f"Unexpected error: {e}")
             return JSONResponse(status_code=500, content={"error": "Internal server error"})

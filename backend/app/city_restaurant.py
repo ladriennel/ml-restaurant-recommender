@@ -2,10 +2,12 @@ from fastapi.responses import JSONResponse
 import os
 import requests
 import time
-import math
 from typing import List, Dict, Set
 from dotenv import load_dotenv
 from threading import Lock
+import logging
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -33,24 +35,6 @@ def calculate_city_radius(population: int) -> int:
     else:
         return 50000  
 
-def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """
-    Calculate distance between two points in kilometers using Haversine formula.
-    """
-    R = 6371  # Earth's radius in km
-    
-    lat1_rad = math.radians(lat1)
-    lon1_rad = math.radians(lon1)
-    lat2_rad = math.radians(lat2)
-    lon2_rad = math.radians(lon2)
-    
-    dlat = lat2_rad - lat1_rad
-    dlon = lon2_rad - lon1_rad
-    
-    a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon/2)**2
-    c = 2 * math.asin(math.sqrt(a))
-    
-    return R * c
 
 async def search_city_restaurants(
     center_lat: float,
@@ -76,7 +60,7 @@ async def search_city_restaurants(
     cache_key = f"{center_lat},{center_lon},{category_set_str},{radius}"
 
     if cache_key in cache:
-        print(f"Returning cached results for city restaurants")
+        logger.info(f"Returning cached results for city restaurants")
         return cache[cache_key]
     
     try:
@@ -102,12 +86,12 @@ async def search_city_restaurants(
             last_request_time = time.time()
             
             if response.status_code == 429:
-                print("Rate limited for city restaurant search")
+                logger.warning("Rate limited for city restaurant search")
                 # Return empty list instead of JSONResponse
                 return []
 
             if response.status_code != 200:
-                print(f"TomTom API error for city search: {response.status_code}")
+                logger.error(f"TomTom API error for city search: {response.status_code}")
                 # Return empty list instead of JSONResponse
                 return []
             
@@ -141,28 +125,18 @@ async def search_city_restaurants(
                         "lat": restaurant_lat,
                         "lon": restaurant_lon
                     }
-                    
-                    # Calculate distance from city center
-                    if restaurant_lat and restaurant_lon:
-                        distance = calculate_distance(
-                            center_lat, center_lon, 
-                            restaurant_lat, restaurant_lon
-                        )
-                        restaurant_data["distance_from_center"] = round(distance, 2)
                 
                 all_restaurants.append(restaurant_data)
         
     except requests.exceptions.Timeout:
-        print("Timeout error in city restaurant search")
+        logger.error("Timeout error in city restaurant search")
         return []
     except Exception as e:
-        print(f"Unexpected error in city restaurant search: {e}")
+        logger.error(f"Unexpected error in city restaurant search: {e}")
         return []
     
-    # Sort by distance from center
-    all_restaurants.sort(key=lambda x: x.get("distance_from_center", float('inf')))
     
     cache[cache_key] = all_restaurants
 
-    print(f"Found {len(all_restaurants)} unique restaurants in city")
+    logger.info(f"Found {len(all_restaurants)} unique restaurants in city")
     return all_restaurants

@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 from typing import List, Dict
 import time
 from threading import Lock
+import logging
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -52,14 +55,14 @@ async def search_locations(query: str = Query(..., min_length=1)) -> List[Dict]:
             last_request_time = time.time()
 
             if response.status_code == 429:
-                print(f"Rate limited for query: {query}")
+                logger.warning(f"Rate limited for query: {query}")
                 return JSONResponse(
                     status_code=429,
                     content={"error": "Rate limit exceeded. Please slow down your typing."}
                 )
 
             if response.status_code != 200:
-                print(f"GeoDB API error: {response.status_code}, {response.text}")
+                logger.error(f"GeoDB API error: {response.status_code}, {response.text}")
                 return JSONResponse(status_code=500, content={"error": "GeoDB API failure"})
 
             data = response.json()
@@ -86,5 +89,5 @@ async def search_locations(query: str = Query(..., min_length=1)) -> List[Dict]:
         except requests.exceptions.Timeout:
             return JSONResponse(status_code=500, content={"error": "API timeout"})
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            logger.error(f"Unexpected error: {e}")
             return JSONResponse(status_code=500, content={"error": "Internal server error"})
