@@ -38,7 +38,7 @@ export default function Location() {
     return (
         <div className="min-h-screen ml-8 mr-8 md:ml-32 md:mr-32 lg:ml-64 lg:mr-64 flex flex-col justify-center items-center">
             <h1 className="text-foreground-1 text-center">Taste<br />Point</h1>
-            <h2 className="text-foreground-1 text-center">What do you want to eat?</h2>
+            <h2 className="text-foreground-1 text-center">Where do you want to eat?</h2>
             <h3 className="text-foreground-2 text-center pt-8 underline">
                 {selectedLocation ? selectedLocation.name : 'Somewhere, Tasty'}
             </h3>

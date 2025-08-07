@@ -14,8 +14,8 @@ import logging
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Semaphore to control concurrent Groq requests
-GROQ_SEMAPHORE = asyncio.Semaphore(20)
+# Semaphore to control concurrent Groq requests 
+GROQ_SEMAPHORE = asyncio.Semaphore(20) 
 
 async def process_all_restaurants(
     user_restaurants_data: List[dict], 
@@ -429,8 +429,8 @@ async def create_search(search_data: SearchCreate, db: Session = Depends(get_db)
             logger.info(f"Found {len(city_restaurants_data)} city restaurants")
             logger.info("=== COMPLETED CITY RESTAURANT SEARCH ===")
         
-        # Process all restaurants
-        logger.info("=== STARTING GROQ PROCESSING ===")
+        # Process all restaurants with concurrent Groq processing
+        logger.info("=== STARTING CONCURRENT GROQ PROCESSING ===")
         await process_all_restaurants(
             user_restaurants_data, 
             city_restaurants_data,

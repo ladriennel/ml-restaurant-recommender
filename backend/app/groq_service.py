@@ -25,7 +25,7 @@ class GroqResponse:
 # Global state for rate limiting and caching 
 cache: Dict[str, GroqResponse] = {}
 last_request_time = 0
-MIN_REQUEST_INTERVAL = 1 
+MIN_REQUEST_INTERVAL = 0.6   
 request_lock = Lock()
 
 # Rate limit tracking
@@ -41,11 +41,11 @@ FALLBACK_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
 RATE_LIMITS = {
     PRIMARY_MODEL: {
-        "requests_per_minute": 60,
-        "requests_per_day": 1000
+        "requests_per_minute": 55,  
+        "requests_per_day": 1000    
     },
     FALLBACK_MODEL: {
-        "requests_per_minute": 30,
+        "requests_per_minute": 28,  
         "requests_per_day": 1000
     }
 }
@@ -183,7 +183,8 @@ async def _make_request(prompt: str, model: str) -> Optional[Dict]:
                     logger.warning(f"Rate limit hit for model {model}")
                     return None
                 else:
-                    logger.error(f"API error {response.status} for model {model}")
+                    error_text = await response.text()
+                    logger.error(f"API error {response.status} for model {model}: {error_text}")
                     return None
                     
     except asyncio.TimeoutError:
@@ -203,18 +204,19 @@ def _parse_response(response_data: Dict, model_used: str) -> GroqResponse:
             description=parsed_data.get("description", ""),
             review_summary=parsed_data.get("review_summary", ""),
             menu_highlights=parsed_data.get("menu_highlights", []),
-            price_level=parsed_data.get("price"),
+            price_level=parsed_data.get("price"), 
             cuisine=parsed_data.get("cuisine", ""),
             tags=parsed_data.get("tags", []),
             model_used=model_used,
             success=True
         )
     except (json.JSONDecodeError, KeyError, IndexError) as e:
-        logger.error(f"Failed to parse response: {e}")
+        logger.error(f"Failed to parse response from {model_used}: {e}")
+        logger.error(f"Raw content that failed to parse: {content}")
         return GroqResponse(model_used=model_used, success=False)
 
 async def get_restaurant_details(restaurant_name: str, restaurant_address: str, tomtom_poi_id: str, categories: List[str] = None) -> GroqResponse:
-    """Get enhanced restaurant details from Groq API with fallback"""
+    """Get enhanced restaurant details from Groq API with Moonshot retry logic"""
     
     # Use tomtom_poi_id as cache key
     cache_key = tomtom_poi_id or f"{restaurant_name}-{restaurant_address}"
@@ -224,46 +226,44 @@ async def get_restaurant_details(restaurant_name: str, restaurant_address: str, 
         logger.info(f"Returning cached Groq results for {restaurant_name}")
         return cache[cache_key]
     
-    # Check rate limits for primary model
-    if not _check_rate_limits(PRIMARY_MODEL):
-        logger.warning("Primary model rate limit exceeded, trying fallback")
-        # Try fallback model
-        if not _check_rate_limits(FALLBACK_MODEL):
-            logger.warning("Both models rate limited, skipping Groq request")
-            result = GroqResponse(success=False)
-            cache[cache_key] = result
-            return result
-        else:
-            # Use fallback model
-            prompt = _create_prompt(restaurant_name, restaurant_address, categories)
-            response_data = await _make_request(prompt, FALLBACK_MODEL)
-            if response_data:
-                _record_request(FALLBACK_MODEL)
-                result = _parse_response(response_data, FALLBACK_MODEL)
-                cache[cache_key] = result
-                return result
-    else:
-        # Try primary model first
-        prompt = _create_prompt(restaurant_name, restaurant_address, categories)
-        response_data = await _make_request(prompt, PRIMARY_MODEL)
-        if response_data:
-            _record_request(PRIMARY_MODEL)
-            result = _parse_response(response_data, PRIMARY_MODEL)
-            cache[cache_key] = result
-            return result
-        
-        # Primary failed, try fallback if within limits
-        if _check_rate_limits(FALLBACK_MODEL):
-            logger.info(f"Primary model failed for {restaurant_name}, trying fallback")
-            response_data = await _make_request(prompt, FALLBACK_MODEL)
-            if response_data:
-                _record_request(FALLBACK_MODEL)
-                result = _parse_response(response_data, FALLBACK_MODEL)
-                cache[cache_key] = result
-                return result
+    prompt = _create_prompt(restaurant_name, restaurant_address, categories)
     
-    # Both models failed
-    logger.error(f"Both primary and fallback models failed for {restaurant_name}")
+    # Check rate limits for primary model (Moonshot)
+    if not _check_rate_limits(PRIMARY_MODEL):
+        logger.warning(f"Moonshot rate limit exceeded for {restaurant_name}, skipping Groq processing")
+        result = GroqResponse(success=False)
+        cache[cache_key] = result
+        return result
+    
+    # Try Moonshot model (first attempt)
+    response_data = await _make_request(prompt, PRIMARY_MODEL)
+    if response_data:
+        _record_request(PRIMARY_MODEL)
+        result = _parse_response(response_data, PRIMARY_MODEL)
+        cache[cache_key] = result
+        return result
+    
+    # If first attempt failed, wait briefly and retry Moonshot once
+    logger.info(f"Moonshot failed for {restaurant_name}, retrying after brief delay")
+    await asyncio.sleep(2)  # Brief delay for API recovery
+    
+    # Check rate limits again before retry
+    if not _check_rate_limits(PRIMARY_MODEL):
+        logger.warning(f"Moonshot rate limit hit during retry for {restaurant_name}")
+        result = GroqResponse(success=False)
+        cache[cache_key] = result
+        return result
+    
+    # Retry Moonshot
+    response_data = await _make_request(prompt, PRIMARY_MODEL)
+    if response_data:
+        _record_request(PRIMARY_MODEL)
+        result = _parse_response(response_data, PRIMARY_MODEL)
+        cache[cache_key] = result
+        return result
+    
+    # Both attempts failed - return empty details rather than poor quality fallback
+    logger.warning(f"Moonshot failed twice for {restaurant_name}, creating empty details")
     result = GroqResponse(success=False)
     cache[cache_key] = result
     return result
