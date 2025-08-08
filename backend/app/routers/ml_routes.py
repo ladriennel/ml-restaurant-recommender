@@ -108,9 +108,9 @@ def generate_explanation(rec: RecommendationResult, rank: int) -> str:
     # Similarity score explanation
     if rec.similarity_score > 0.8:
         explanations.append("Excellent match")
-    elif rec.similarity_score > 0.6:
+    elif rec.similarity_score > 0.7:
         explanations.append("Very good match")
-    elif rec.similarity_score > 0.4:
+    elif rec.similarity_score > 0.5:
         explanations.append("Good match")
     else:
         explanations.append("Moderate match")
@@ -124,16 +124,16 @@ def generate_explanation(rec: RecommendationResult, rank: int) -> str:
     if rec.feature_scores.get('price', 0) > 0.7:
         feature_explanations.append("similar price range")
     
-    if rec.feature_scores.get('description', 0) > 0.6:
+    if rec.feature_scores.get('description', 0) > 0.8:
         feature_explanations.append("similar atmosphere and style")
     
-    if rec.feature_scores.get('menu_tags', 0) > 0.6:
+    if rec.feature_scores.get('menu_tags', 0) > 0.8:
         feature_explanations.append("similar menu offerings")
     
     if feature_explanations:
-        explanations.append(f"Strong matches: {', '.join(feature_explanations)}")
+        explanations.append(f"{', '.join(feature_explanations)}")
     
-    return " | ".join(explanations)
+    return ": ".join(explanations)
 
 @router.get("/recommendations/explain/{search_id}")
 async def explain_recommendations(

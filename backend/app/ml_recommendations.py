@@ -97,13 +97,13 @@ class RestaurantRecommendationSystem:
         # For feature scaling when combining different score types
         self.scaler = StandardScaler()
         
-        # Feature weights (adjusted for Groq data quality)
+        # Feature weights 
         self.feature_weights = {
             'cuisine': 0.20,       
-            'price': 0.20,         
+            'price': 0.15,         
             'description': 0.25,    
             'review': 0.15,         
-            'menu_tags': 0.20   
+            'menu_tags': 0.25   
         }
         
         # Track if TF-IDF vectorizers are fitted

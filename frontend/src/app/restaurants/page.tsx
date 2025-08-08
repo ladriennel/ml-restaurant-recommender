@@ -11,6 +11,7 @@ export default function Restaurants() {
     const router = useRouter();
     const [searchLoading, setSearchLoading] = useState(false);
     const [progressInfo, setProgressInfo] = useState({ current: 0, total: 0 });
+    const [hasResults, setHasResults] = useState(false);
     const [selectedRestaurants, setSelectedRestaurants] = useState<(Restaurant | null)[]>(
         Array(5).fill(null)
     );
@@ -19,9 +20,18 @@ export default function Restaurants() {
         const storedRestaurants = store.getRestaurants();
         setSelectedRestaurants(storedRestaurants);
 
+        const checkResults = () => {
+            const searchId = store.getCurrentSearchId();
+            const cachedRecs = store.getCachedRecommendations();
+            setHasResults(searchId !== null && cachedRecs !== null && cachedRecs.length > 0);
+        };
+        
+        checkResults();
+
         const unsubscribe = store.subscribe(() => {
             const currentRestaurants = store.getRestaurants();
             setSelectedRestaurants(currentRestaurants);
+            checkResults(); // Re-check results when store updates
         });
 
         return unsubscribe;
@@ -66,17 +76,13 @@ export default function Restaurants() {
             // Realistic progress for ~3+ minute process
             const progressInterval = setInterval(() => {
                 setProgressInfo(prev => {
-                    // Slow, realistic progress that reflects actual processing time
                     let increment = 1;
-                    
-                    if (prev.current < 20) {
+                    if (prev.current < 10) {
                         increment = 2; 
-                    } else if (prev.current < 50) {
-                        increment = 1;
                     } else if (prev.current < 80) {
-                        increment = 0.5; 
+                        increment = 1;
                     } else {
-                        increment = 0.2; 
+                        increment = 0.5; 
                     }
                     
                     return {
@@ -84,7 +90,7 @@ export default function Restaurants() {
                         current: Math.min(prev.current + increment, 90) // Don't go past 90% until complete
                     };
                 });
-            }, 2000); // Update every 2 seconds instead of 200ms
+            }, 2000); // Update every 2 seconds
 
             const response = await fetch('http://localhost:8000/api/searches', {
                 method: 'POST',
@@ -142,13 +148,19 @@ export default function Restaurants() {
                     />
                 ))}
             </div>
-            <div className="flex flex-col pt-8 gap-4">
-                <Button onClick={handleFindRestaurants}>
-                    <p>Find Restaurants</p>
-                </Button>
-                <Button href="/results">
-                    <p>See Results</p>
-                </Button>
+            <div className="flex flex-col pt-8 gap-4 items-center">
+                <div className={`flex gap-4 ${hasResults ? 'flex-row' : 'flex-col'}`}>
+                    <Button onClick={handleFindRestaurants}>
+                        <p>Find Restaurants</p>
+                    </Button>
+                    {hasResults && (
+                        <Button href="/results">
+                            <p>See Results</p>
+                        </Button>
+                    )}
+                </div>
+                
+                {/* Secondary action */}
                 <Button href="/location" variant='secondary'>
                     <p>Edit Location</p>
                 </Button>
@@ -176,11 +188,10 @@ export default function Restaurants() {
                             {Math.round((progressInfo.current / progressInfo.total) * 100)}% Complete
                         </p>
                         <p className="text-sm text-foreground-2 mt-1">
-                            {progressInfo.current < 15 ? 'Searching city restaurants...' :
-                             progressInfo.current < 25 ? 'Found restaurants, enhancing with AI details...' :
-                             progressInfo.current < 60 ? 'Processing restaurant details with Groq AI...' :
-                             progressInfo.current < 80 ? 'Running ML similarity analysis...' :
-                             progressInfo.current < 90 ? 'Finalizing recommendations...' :
+                            {progressInfo.current < 10 ? 'Searching city restaurants...' :
+                             progressInfo.current < 80 ? 'Processing restaurant details...' :
+                             progressInfo.current < 90 ? 'Running ML similarity analysis...' :
+                             progressInfo.current < 95 ? 'Finalizing recommendations...' :
                              'Almost ready...'}
                         </p>
                     </div>

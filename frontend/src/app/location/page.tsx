@@ -59,8 +59,7 @@ export default function Location() {
                 }}
                 onSelect={handleLocationSelect}
             />
-            <div className="flex flex-col pt-12 gap-4">
-
+            <div className="flex flex-col pt-8 gap-4">
                 <Button href="/restaurants">
                     <p>Next</p>
                 </Button>
