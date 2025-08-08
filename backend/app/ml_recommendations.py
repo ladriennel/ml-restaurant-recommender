@@ -461,9 +461,29 @@ class RestaurantRecommendationSystem:
                 'best_user_match': user_restaurants[best_user_match].name
             })
         
-        # Sort by similarity and take top k
-        city_restaurant_scores.sort(key=lambda x: x['similarity'], reverse=True)
-        top_recommendations = city_restaurant_scores[:top_k]
+        # Filter out restaurants with same names as user restaurants
+        user_restaurant_names = set()
+        for user_restaurant in user_restaurants:
+            normalized_name = user_restaurant.name.lower().strip()
+            user_restaurant_names.add(normalized_name)
+        
+        # Filter city restaurants with different names
+        filtered_city_scores = []
+        seen_names = set()  
+        
+        for score_data in city_restaurant_scores:
+            city_name = score_data['restaurant'].name.lower().strip()
+            
+            # Skip if matches user restaurant or already seen
+            if city_name not in user_restaurant_names and city_name not in seen_names:
+                filtered_city_scores.append(score_data)
+                seen_names.add(city_name)
+        
+        logger.info(f"Filtered out {len(city_restaurant_scores) - len(filtered_city_scores)} duplicate restaurants")
+        
+        # Sort by similarity and take top k from filtered results
+        filtered_city_scores.sort(key=lambda x: x['similarity'], reverse=True)
+        top_recommendations = filtered_city_scores[:top_k]
         
         # Convert to RecommendationResult objects
         recommendations = []

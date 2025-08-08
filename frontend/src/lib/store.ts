@@ -1,4 +1,4 @@
-import { Restaurant, LocationData, SearchData } from '@/types';
+import { Restaurant, LocationData, SearchData, RecommendationResult } from '@/types';
 
 class AppStore {
   private data: SearchData = {
@@ -7,6 +7,7 @@ class AppStore {
   };
 
   private currentSearchId: number | null = null;
+  private cachedRecommendations: RecommendationResult[] | null = null;
   private listeners: (() => void)[] = [];
 
   getLocation(): LocationData | null {
@@ -51,7 +52,25 @@ class AppStore {
   }
 
   getCurrentSearchId(): number | null {
+    console.log('Getting current search ID from store:', this.currentSearchId);
     return this.currentSearchId;
+  }
+
+  setCachedRecommendations(recommendations: RecommendationResult[]): void {
+    console.log('Caching recommendations:', recommendations.length);
+    this.cachedRecommendations = recommendations;
+    this.notifyListeners();
+  }
+
+  getCachedRecommendations(): RecommendationResult[] | null {
+    console.log('Getting cached recommendations from store:', this.cachedRecommendations?.length || 'null');
+    return this.cachedRecommendations;
+  }
+
+  clearCachedRecommendations(): void {
+    console.log('Clearing cached recommendations');
+    this.cachedRecommendations = null;
+    this.notifyListeners();
   }
 
   clearData(): void {
@@ -61,6 +80,7 @@ class AppStore {
       restaurants: Array(5).fill(null)
     };
     this.currentSearchId = null;
+    this.cachedRecommendations = null;
     this.notifyListeners();
   }
 

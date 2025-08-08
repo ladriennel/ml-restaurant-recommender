@@ -9,6 +9,8 @@ import { store } from '@/lib/store';
 
 export default function Restaurants() {
     const router = useRouter();
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [progressInfo, setProgressInfo] = useState({ current: 0, total: 0 });
     const [selectedRestaurants, setSelectedRestaurants] = useState<(Restaurant | null)[]>(
         Array(5).fill(null)
     );
@@ -53,7 +55,37 @@ export default function Restaurants() {
             alert('Please select at least one restaurant!');
             return;
         }
+
+        setSearchLoading(true);
+        setProgressInfo({ current: 0, total: 100 });
+
+        // Clear cached recommendations for new search
+        store.clearCachedRecommendations();
+
         try {
+            // Realistic progress for ~3+ minute process
+            const progressInterval = setInterval(() => {
+                setProgressInfo(prev => {
+                    // Slow, realistic progress that reflects actual processing time
+                    let increment = 1;
+                    
+                    if (prev.current < 20) {
+                        increment = 2; 
+                    } else if (prev.current < 50) {
+                        increment = 1;
+                    } else if (prev.current < 80) {
+                        increment = 0.5; 
+                    } else {
+                        increment = 0.2; 
+                    }
+                    
+                    return {
+                        ...prev,
+                        current: Math.min(prev.current + increment, 90) // Don't go past 90% until complete
+                    };
+                });
+            }, 2000); // Update every 2 seconds instead of 200ms
+
             const response = await fetch('http://localhost:8000/api/searches', {
                 method: 'POST',
                 headers: {
@@ -65,6 +97,7 @@ export default function Restaurants() {
                 }),
             });
 
+            clearInterval(progressInterval);
             console.log('Response status:', response.status);
 
             if (!response.ok) {
@@ -79,10 +112,18 @@ export default function Restaurants() {
                 store.setCurrentSearchId(result.id);
             }
 
-            // Navigate to results page
-            router.push('/results');
+            // Complete the progress
+            setProgressInfo({ current: 100, total: 100 });
+            
+            // Small delay to show completion
+            setTimeout(() => {
+                setSearchLoading(false);
+                router.push('/results');
+            }, 500);
+
         } catch (error) {
             console.error('Error saving search:', error);
+            setSearchLoading(false);
             alert('Failed to save search. Please try again.');
         }
     };
@@ -90,7 +131,7 @@ export default function Restaurants() {
     return (
         <div className="min-h-screen ml-8 mr-8 md:ml-32 md:mr-32 lg:ml-64 lg:mr-64 flex flex-col justify-center items-center">
             <h1 className="text-foreground-1 text-center">Taste<br />Point</h1>
-            <h2 className="text-foreground-1 text-center">List up to 5 restaurants that are on your mind,<br />and we’ll find the best matches in your area!</h2>
+            <h2 className="text-foreground-1 text-center">List up to 5 restaurants that are on your mind,<br />and we'll find the best matches in your area!</h2>
             <div className="mt-8 flex flex-col gap-6">
                 {selectedRestaurants.map((restaurant, index) => (
                     <RestaurantInsert
@@ -103,12 +144,48 @@ export default function Restaurants() {
             </div>
             <div className="flex flex-col pt-8 gap-4">
                 <Button onClick={handleFindRestaurants}>
-                    <p>Find Restaurants!</p>
+                    <p>Find Restaurants</p>
+                </Button>
+                <Button href="/results">
+                    <p>See Results</p>
                 </Button>
                 <Button href="/location" variant='secondary'>
                     <p>Edit Location</p>
                 </Button>
             </div>
+
+            {/* Loading Modal */}
+            {searchLoading && (
+                <div className="fixed inset-0 z-50 bg-[rgba(215,228,230,0.9)] flex flex-col gap-6 items-center justify-center">
+                    <div className="text-center">
+                        <h3 className="text-2xl font-bold text-foreground-1 mb-2">Finding Your Perfect Matches!</h3>
+                        <p className="text-foreground-2 mb-6">Processing restaurants and analyzing preferences...</p>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-80 bg-background-1 rounded-full h-4 shadow-inner">
+                        <div 
+                            className="bg-gradient-to-r from-blue-500 to-purple-600 h-4 rounded-full transition-all duration-300 ease-out"
+                            style={{ width: `${(progressInfo.current / progressInfo.total) * 100}%` }}
+                        ></div>
+                    </div>
+                    
+                    {/* Progress Text */}
+                    <div className="text-center">
+                        <p className="text-foreground-1 font-medium">
+                            {Math.round((progressInfo.current / progressInfo.total) * 100)}% Complete
+                        </p>
+                        <p className="text-sm text-foreground-2 mt-1">
+                            {progressInfo.current < 15 ? 'Searching city restaurants...' :
+                             progressInfo.current < 25 ? 'Found restaurants, enhancing with AI details...' :
+                             progressInfo.current < 60 ? 'Processing restaurant details with Groq AI...' :
+                             progressInfo.current < 80 ? 'Running ML similarity analysis...' :
+                             progressInfo.current < 90 ? 'Finalizing recommendations...' :
+                             'Almost ready...'}
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

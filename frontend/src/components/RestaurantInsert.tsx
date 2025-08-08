@@ -87,8 +87,6 @@ export default function RestaurantInsert({
                         }}
                         onSelect={handleSelect}
                     />
-
-
                 </div>
             )}
         </>

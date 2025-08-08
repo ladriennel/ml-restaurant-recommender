@@ -21,6 +21,16 @@ export default function Results() {
                 return;
             }
 
+            // Check if we have cached recommendations first
+            const cachedRecs = store.getCachedRecommendations();
+            if (cachedRecs && cachedRecs.length > 0) {
+                console.log('Using cached recommendations:', cachedRecs.length);
+                setRecommendations(cachedRecs);
+                setLoading(false);
+                setError(null);
+                return;
+            }
+
             try {
                 console.log(`Fetching ML recommendations for search ID: ${searchId}`);
                 
@@ -44,18 +54,8 @@ export default function Results() {
                 const result = await response.json();
                 console.log('ML recommendations received:', result);
                 
-                // Log detailed information about each recommendation
-                result.forEach((rec: RecommendationResult, index: number) => {
-                    console.log(`=== Recommendation ${index + 1} ===`);
-                    console.log('Restaurant:', rec.restaurant_name);
-                    console.log('Address:', rec.address);
-                    console.log('Similarity Score:', rec.similarity_score);
-                    console.log('Feature Scores:', rec.feature_scores);
-                    console.log('Matched Features:', rec.matched_features);
-                    console.log('Explanation:', rec.explanation);
-                    console.log('========================');
-                });
-
+                // Cache the results and set state
+                store.setCachedRecommendations(result);
                 setRecommendations(result);
                 setError(null);
             } catch (error) {
