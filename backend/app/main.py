@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine
 from models import Base
-from routers import location, restaurant, search
+from routers import location, restaurant, search, ml_routes
 import logging
 
 # Configure logging to show INFO level messages
@@ -27,6 +27,7 @@ app.add_middleware(
 app.include_router(location.router, prefix="/api", tags=["locations"])
 app.include_router(restaurant.router, prefix="/api", tags=["restaurants"])
 app.include_router(search.router, prefix="/api", tags=["searches"])
+app.include_router(ml_routes.router, prefix="/api", tags=["ml"])
 
 
 @app.get("/")

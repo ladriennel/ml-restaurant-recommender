@@ -6,6 +6,7 @@ class AppStore {
     restaurants: Array(5).fill(null)
   };
 
+  private currentSearchId: number | null = null;
   private listeners: (() => void)[] = [];
 
   getLocation(): LocationData | null {
@@ -43,12 +44,23 @@ class AppStore {
     };
   }
 
+  setCurrentSearchId(searchId: number): void {
+    console.log('Setting current search ID:', searchId);
+    this.currentSearchId = searchId;
+    this.notifyListeners();
+  }
+
+  getCurrentSearchId(): number | null {
+    return this.currentSearchId;
+  }
+
   clearData(): void {
     console.log('Clearing all store data');
     this.data = {
       location: null,
       restaurants: Array(5).fill(null)
     };
+    this.currentSearchId = null;
     this.notifyListeners();
   }
 

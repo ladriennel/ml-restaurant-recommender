@@ -19,7 +19,6 @@ export type Restaurant = {
       lat: number;
       lon: number;
     };
-    distance_from_center?: number;
     tomtom_poi_id?: string;
   };
   
@@ -33,4 +32,25 @@ export type Restaurant = {
   export type SearchData = {
     location: LocationData | null;
     restaurants: (Restaurant | null)[];
+  };
+
+  export type RecommendationResult = {
+    restaurant_id: number;
+    restaurant_name: string;
+    address: string;
+    tomtom_poi_id: string;
+    similarity_score: number;
+    feature_scores: {
+      cuisine: number;
+      price: number;
+      description: number;
+      menu_tags: number;
+    };
+    matched_features: string[];
+    explanation: string;
+  };
+
+  export type RecommendationRequest = {
+    search_id: number;
+    top_k?: number;
   };

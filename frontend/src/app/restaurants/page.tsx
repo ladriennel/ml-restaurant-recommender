@@ -74,6 +74,11 @@ export default function Restaurants() {
             const result = await response.json();
             console.log('Search saved successfully:', result);
 
+            // Store the search ID for the results page
+            if (result.id) {
+                store.setCurrentSearchId(result.id);
+            }
+
             // Navigate to results page
             router.push('/results');
         } catch (error) {

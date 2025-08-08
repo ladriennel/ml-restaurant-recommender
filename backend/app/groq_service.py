@@ -35,18 +35,12 @@ daily_request_count_primary = 0
 daily_request_count_fallback = 0
 daily_reset_time = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
-# Model-specific rate limits 
 PRIMARY_MODEL = "moonshotai/kimi-k2-instruct"
-FALLBACK_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
 RATE_LIMITS = {
     PRIMARY_MODEL: {
         "requests_per_minute": 55,  
         "requests_per_day": 1000    
-    },
-    FALLBACK_MODEL: {
-        "requests_per_minute": 28,  
-        "requests_per_day": 1000
     }
 }
 
