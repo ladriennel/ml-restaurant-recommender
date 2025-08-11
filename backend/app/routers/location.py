@@ -72,6 +72,10 @@ async def search_locations(query: str = Query(..., min_length=1)) -> List[Dict]:
                 region = city.get('region', city.get('regionCode', ''))
                 country = city.get('countryCode', city.get('country', ''))
                 
+                # Skip cities with numbers in the name
+                if any(char.isdigit() for char in city_name):
+                    continue
+                
                 if region:
                     formatted_city = f"{city_name}, {region}, {country}"
                 else:

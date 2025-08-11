@@ -72,7 +72,7 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
 
   const handleSelect = (result: string) => {
     onSelect(result);
-    setQuery(result);
+    setQuery('');
     setResults([]);
     setShowDropdown(false);
     setIsSelected(true);

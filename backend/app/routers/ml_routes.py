@@ -18,7 +18,6 @@ class RecommendationResponse(BaseModel):
     tomtom_poi_id: str
     similarity_score: float
     feature_scores: dict
-    matched_features: List[str]
     explanation: str
 
 class RecommendationRequest(BaseModel):
@@ -84,7 +83,6 @@ async def get_restaurant_recommendations(
                 tomtom_poi_id=rec.tomtom_poi_id,
                 similarity_score=round(rec.similarity_score, 3),
                 feature_scores={k: round(v, 3) for k, v in rec.feature_scores.items()},
-                matched_features=rec.matched_features,
                 explanation=explanation
             ))
         
@@ -106,34 +104,35 @@ def generate_explanation(rec: RecommendationResult, rank: int) -> str:
     explanations = []
     
     # Similarity score explanation
-    if rec.similarity_score > 0.8:
-        explanations.append("Excellent match")
-    elif rec.similarity_score > 0.7:
-        explanations.append("Very good match")
-    elif rec.similarity_score > 0.5:
-        explanations.append("Good match")
-    else:
-        explanations.append("Moderate match")
+    score_thresholds = [
+        (0.8, "Excellent match"),
+        (0.7, "Very good match"),
+        (0.5, "Good match"),
+        (0.0, "Moderate match")
+    ]
     
-    # Feature-specific explanations
-    feature_explanations = []
+    for threshold, description in score_thresholds:
+        if rec.similarity_score > threshold:
+            explanations.append(description)
+            break
     
-    if rec.feature_scores.get('cuisine', 0) > 0.7:
-        feature_explanations.append("similar cuisine")
+    # Feature-specific explanations with mapping to avoid duplicates
+    feature_mappings = {
+        'cuisine': "cuisine",
+        'description': "atmosphere and style",
+        'tags': "atmosphere and style",
+        'menu': "menu offerings"
+    }
     
-    if rec.feature_scores.get('price', 0) > 0.7:
-        feature_explanations.append("similar price range")
-    
-    if rec.feature_scores.get('description', 0) > 0.8:
-        feature_explanations.append("similar atmosphere and style")
-    
-    if rec.feature_scores.get('menu_tags', 0) > 0.8:
-        feature_explanations.append("similar menu offerings")
+    feature_explanations = set()
+    for feature, score in rec.feature_scores.items():
+        if score > 0.8 and feature in feature_mappings:
+            feature_explanations.add(feature_mappings[feature])
     
     if feature_explanations:
-        explanations.append(f"{', '.join(feature_explanations)}")
+        explanations.append(f"{', '.join(sorted(feature_explanations))}")
     
-    return ": ".join(explanations)
+    return ": similar ".join(explanations)
 
 @router.get("/recommendations/explain/{search_id}")
 async def explain_recommendations(

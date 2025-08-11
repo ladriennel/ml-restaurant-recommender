@@ -135,7 +135,7 @@ export default function Restaurants() {
     };
 
     return (
-        <div className="min-h-screen ml-8 mr-8 md:ml-32 md:mr-32 lg:ml-64 lg:mr-64 flex flex-col justify-center items-center">
+        <div className="min-h-screen m-12 md:ml-32 md:mr-32 flex flex-col justify-center items-center">
             <h1 className="text-foreground-1 text-center">Taste<br />Point</h1>
             <h2 className="text-foreground-1 text-center">List up to 5 restaurants that are on your mind,<br />and we'll find the best matches in your area!</h2>
             <div className="mt-8 flex flex-col gap-6">
@@ -170,8 +170,7 @@ export default function Restaurants() {
             {searchLoading && (
                 <div className="fixed inset-0 z-50 bg-[rgba(215,228,230,0.9)] flex flex-col gap-6 items-center justify-center">
                     <div className="text-center">
-                        <h3 className="text-2xl font-bold text-foreground-1 mb-2">Finding Your Perfect Matches!</h3>
-                        <p className="text-foreground-2 mb-6">Processing restaurants and analyzing preferences...</p>
+                        <h3 className="text-2xl font-bold text-foreground-1 mb-2">Finding Your Restaurant Matches!</h3>
                     </div>
                     
                     {/* Progress Bar */}
@@ -189,7 +188,7 @@ export default function Restaurants() {
                         </p>
                         <p className="text-sm text-foreground-2 mt-1">
                             {progressInfo.current < 10 ? 'Searching city restaurants...' :
-                             progressInfo.current < 80 ? 'Processing restaurant details...' :
+                             progressInfo.current < 85 ? 'Processing restaurant details...' :
                              progressInfo.current < 90 ? 'Running ML similarity analysis...' :
                              progressInfo.current < 95 ? 'Finalizing recommendations...' :
                              'Almost ready...'}

@@ -50,8 +50,10 @@ class RestaurantFeatures:
     # Processed features
     cuisine_vector: np.ndarray = None
     price_score: float = None
-    text_embeddings: np.ndarray = None
-    menu_tags_embeddings: np.ndarray = None
+    description_embeddings: np.ndarray = None
+    review_embeddings: np.ndarray = None
+    menu_embeddings: np.ndarray = None
+    tags_embeddings: np.ndarray = None
     combined_score: float = 0.0
 
 @dataclass
@@ -63,7 +65,6 @@ class RecommendationResult:
     tomtom_poi_id: str
     similarity_score: float
     feature_scores: Dict[str, float]
-    matched_features: List[str]
 
 class RestaurantRecommendationSystem:
     """Main recommendation system using multiple ML techniques"""
@@ -97,13 +98,14 @@ class RestaurantRecommendationSystem:
         # For feature scaling when combining different score types
         self.scaler = StandardScaler()
         
-        # Feature weights 
+        # Feature weights (more granular for better accuracy)
         self.feature_weights = {
-            'cuisine': 0.20,       
-            'price': 0.15,         
-            'description': 0.25,    
-            'review': 0.15,         
-            'menu_tags': 0.25   
+            'cuisine': 0.18,      
+            'price': 0.15,        
+            'description': 0.20,   
+            'review': 0.12,       
+            'menu': 0.20,        
+            'tags': 0.15
         }
         
         # Track if TF-IDF vectorizers are fitted
@@ -215,43 +217,49 @@ class RestaurantRecommendationSystem:
                 features.price_score = NEUTRAL_SIMILARITY_SCORE  
 
     def process_text_features(self, features_list: List[RestaurantFeatures]) -> None:
-        """Process description and review summary using sentence embeddings"""
+        """Process description and review summary separately using sentence embeddings"""
         
-        logger.info("Processing text features with sentence transformers")
+        logger.info("Processing description and review features with sentence transformers")
         
-        # Combine description and review for richer context
-        combined_texts = []
+        # Prepare separate description and review texts
+        description_texts = []
+        review_texts = []
+        
         for features in features_list:
-            text_parts = []
+            # Description text
+            desc_text = features.description.strip() if features.description.strip() else f"{features.name} restaurant"
+            description_texts.append(desc_text)
             
-            if features.description.strip():
-                text_parts.append(features.description.strip())
-            if features.review_summary.strip():
-                text_parts.append(features.review_summary.strip())
-            
-            if not text_parts:
-                text_parts.append(f"{features.name} {features.cuisine}".strip())
-            
-            combined_text = " ".join(text_parts)
-            combined_texts.append(combined_text)
+            # Review text  
+            review_text = features.review_summary.strip() if features.review_summary.strip() else "customer reviews"
+            review_texts.append(review_text)
         
-        # Generate embeddings for all texts at once (more efficient)
         try:
-            embeddings = self.sentence_model.encode(
-                combined_texts,
+            # Generate embeddings for descriptions
+            description_embeddings = self.sentence_model.encode(
+                description_texts,
+                convert_to_tensor=False,
+                show_progress_bar=False
+            )
+            
+            # Generate embeddings for reviews
+            review_embeddings = self.sentence_model.encode(
+                review_texts,
                 convert_to_tensor=False,
                 show_progress_bar=False
             )
             
             # Assign embeddings to features
             for i, features in enumerate(features_list):
-                features.text_embeddings = embeddings[i]
+                features.description_embeddings = description_embeddings[i]
+                features.review_embeddings = review_embeddings[i]
                 
         except Exception as e:
             logger.error(f"Error generating text embeddings: {e}")
             # Fallback to zeros
             for features in features_list:
-                features.text_embeddings = np.zeros(SENTENCE_EMBEDDING_DIM)
+                features.description_embeddings = np.zeros(SENTENCE_EMBEDDING_DIM)
+                features.review_embeddings = np.zeros(SENTENCE_EMBEDDING_DIM)
 
     def process_menu_and_tags_features(self, features_list: List[RestaurantFeatures]) -> None:
         """Process menu highlights and tags using TF-IDF for exact dish/tag matching"""
@@ -288,38 +296,21 @@ class RestaurantRecommendationSystem:
             else:
                 tags_tfidf_matrix = self.tags_tfidf.transform(tag_texts)
             
-            # Also get semantic embeddings for broader similarity
-            combined_menu_tags = [f"{menu} {tag}" for menu, tag in zip(menu_texts, tag_texts)]
-            semantic_embeddings = self.sentence_model.encode(
-                combined_menu_tags,
-                convert_to_tensor=False,
-                show_progress_bar=False
-            )
             
-            # Assign combined features to each restaurant
+            # Assign separate features to each restaurant
             for i, features in enumerate(features_list):
-                # Combine TF-IDF vectors with semantic embeddings
-                menu_tfidf_vec = menu_tfidf_matrix[i].toarray().flatten()
-                tags_tfidf_vec = tags_tfidf_matrix[i].toarray().flatten()
-                semantic_vec = semantic_embeddings[i]
+                # Store menu and tags embeddings 
+                features.menu_embeddings = menu_tfidf_matrix[i].toarray().flatten()
+                features.tags_embeddings = tags_tfidf_matrix[i].toarray().flatten()
                 
-                # Concatenate all features (will scale them later)
-                combined_features = np.concatenate([
-                    menu_tfidf_vec,
-                    tags_tfidf_vec, 
-                    semantic_vec * SEMANTIC_EMBEDDING_WEIGHT  # Weight semantic features less than exact matches
-                ])
-                
-                features.menu_tags_embeddings = combined_features
-                
-                logger.debug(f"{features.name}: menu_items={len(features.menu_highlights)}, tags={len(features.tags)}, feature_dim={len(combined_features)}")
+                logger.debug(f"{features.name}: menu_items={len(features.menu_highlights)}, tags={len(features.tags)}, menu_dim={len(features.menu_embeddings)}, tags_dim={len(features.tags_embeddings)}")
                 
         except Exception as e:
             logger.error(f"Error processing menu/tags: {e}")
             # Fallback to zero vectors
-            fallback_dim = MENU_TFIDF_MAX_FEATURES + TAGS_TFIDF_MAX_FEATURES + SENTENCE_EMBEDDING_DIM
             for features in features_list:
-                features.menu_tags_embeddings = np.zeros(fallback_dim)
+                features.menu_embeddings = np.zeros(MENU_TFIDF_MAX_FEATURES)
+                features.tags_embeddings = np.zeros(TAGS_TFIDF_MAX_FEATURES)
 
     def calculate_feature_similarities(
         self, 
@@ -361,42 +352,68 @@ class RestaurantRecommendationSystem:
                     price_sim = NEUTRAL_SIMILARITY_SCORE 
                 scores['price'] = price_sim
                 
-                # 3. Text similarity (description + review)
-                if (city_restaurant.text_embeddings is not None and 
-                    user_restaurant.text_embeddings is not None):
-                    text_sim = cosine_similarity(
-                        [city_restaurant.text_embeddings], 
-                        [user_restaurant.text_embeddings]
+                # 3. Description similarity (semantic embeddings)
+                if (city_restaurant.description_embeddings is not None and 
+                    user_restaurant.description_embeddings is not None):
+                    desc_sim = cosine_similarity(
+                        [city_restaurant.description_embeddings], 
+                        [user_restaurant.description_embeddings]
                     )[0][0]
-                    text_sim = (text_sim + COSINE_SIM_NORMALIZATION_OFFSET) / 2
+                    desc_sim = (desc_sim + COSINE_SIM_NORMALIZATION_OFFSET) / 2
                 else:
-                    text_sim = NEUTRAL_SIMILARITY_SCORE
-                scores['description'] = text_sim
+                    desc_sim = NEUTRAL_SIMILARITY_SCORE
+                scores['description'] = desc_sim
                 
-                # 4. Menu/tags similarity (TF-IDF + semantic combination)
-                if (city_restaurant.menu_tags_embeddings is not None and 
-                    user_restaurant.menu_tags_embeddings is not None):
-                    
-                    # Ensure both vectors have same dimension
-                    city_vec = city_restaurant.menu_tags_embeddings
-                    user_vec = user_restaurant.menu_tags_embeddings
-                    
-                    if len(city_vec) == len(user_vec):
-                        menu_sim = cosine_similarity([city_vec], [user_vec])[0][0]
+                # 4. Review similarity (semantic embeddings)
+                if (city_restaurant.review_embeddings is not None and 
+                    user_restaurant.review_embeddings is not None):
+                    review_sim = cosine_similarity(
+                        [city_restaurant.review_embeddings], 
+                        [user_restaurant.review_embeddings]
+                    )[0][0]
+                    review_sim = (review_sim + COSINE_SIM_NORMALIZATION_OFFSET) / 2
+                else:
+                    review_sim = NEUTRAL_SIMILARITY_SCORE
+                scores['review'] = review_sim
+                
+                # 5. Menu similarity (TF-IDF)
+                if (city_restaurant.menu_embeddings is not None and 
+                    user_restaurant.menu_embeddings is not None):
+                    if len(city_restaurant.menu_embeddings) == len(user_restaurant.menu_embeddings):
+                        menu_sim = cosine_similarity(
+                            [city_restaurant.menu_embeddings], 
+                            [user_restaurant.menu_embeddings]
+                        )[0][0]
                         menu_sim = max(0, (menu_sim + 1) / 2)  # Ensure positive
                     else:
-                        logger.warning(f"Menu/tags vector dimension mismatch: {len(city_vec)} vs {len(user_vec)}")
-                        menu_sim = 0.5
+                        menu_sim = NEUTRAL_SIMILARITY_SCORE
                 else:
-                    menu_sim = 0.5
-                scores['menu_tags'] = menu_sim
+                    menu_sim = NEUTRAL_SIMILARITY_SCORE
+                scores['menu'] = menu_sim
                 
-                # Calculate weighted similarity
+                # 6. Tags similarity (TF-IDF)
+                if (city_restaurant.tags_embeddings is not None and 
+                    user_restaurant.tags_embeddings is not None):
+                    if len(city_restaurant.tags_embeddings) == len(user_restaurant.tags_embeddings):
+                        tags_sim = cosine_similarity(
+                            [city_restaurant.tags_embeddings], 
+                            [user_restaurant.tags_embeddings]
+                        )[0][0]
+                        tags_sim = max(0, (tags_sim + 1) / 2)  # Ensure positive
+                    else:
+                        tags_sim = NEUTRAL_SIMILARITY_SCORE
+                else:
+                    tags_sim = NEUTRAL_SIMILARITY_SCORE
+                scores['tags'] = tags_sim
+                
+                # Calculate weighted similarity using all 6 features
                 weighted_sim = (
                     scores['cuisine'] * self.feature_weights['cuisine'] +
                     scores['price'] * self.feature_weights['price'] +
                     scores['description'] * self.feature_weights['description'] +
-                    scores['menu_tags'] * self.feature_weights['menu_tags']
+                    scores['review'] * self.feature_weights['review'] +
+                    scores['menu'] * self.feature_weights['menu'] +
+                    scores['tags'] * self.feature_weights['tags']
                 )
                 
                 similarity_matrix[i][j] = weighted_sim
@@ -446,18 +463,10 @@ class RestaurantRecommendationSystem:
             # Get feature breakdown
             feature_scores = feature_details[i]
             
-            # Identify matched features (above threshold)
-            matched_features = []
-            threshold = 0.5
-            for feature, score in feature_scores.items():
-                if score > threshold:
-                    matched_features.append(f"{feature} ({score:.2f})")
-            
             city_restaurant_scores.append({
                 'restaurant': city_restaurant,
                 'similarity': max_similarity,
                 'feature_scores': feature_scores,
-                'matched_features': matched_features,
                 'best_user_match': user_restaurants[best_user_match].name
             })
         
@@ -495,8 +504,7 @@ class RestaurantRecommendationSystem:
                 address=restaurant.address,
                 tomtom_poi_id=restaurant.tomtom_poi_id or "",
                 similarity_score=rec['similarity'],
-                feature_scores=rec['feature_scores'],
-                matched_features=rec['matched_features']
+                feature_scores=rec['feature_scores']
             ))
         
         logger.info(f"Generated {len(recommendations)} recommendations")

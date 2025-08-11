@@ -44,9 +44,10 @@ export type Restaurant = {
       cuisine: number;
       price: number;
       description: number;
-      menu_tags: number;
+      review: number;
+      menu: number;
+      tags: number;
     };
-    matched_features: string[];
     explanation: string;
   };
 

@@ -417,11 +417,12 @@ async def create_search(search_data: SearchCreate, db: Session = Depends(get_db)
             
             logger.info(f"Searching city restaurants with categories: {category_ids}")
             
-            population = search_data.location.population or 100000
+            population = search_data.location.population or 40000
             
             city_restaurants_data = await search_city_restaurants(
                 center_lat=search_data.location.latitude,
                 center_lon=search_data.location.longitude,
+                city_name=search_data.location.name,  
                 category_ids=category_ids,
                 population=population,
             )
@@ -429,7 +430,6 @@ async def create_search(search_data: SearchCreate, db: Session = Depends(get_db)
             logger.info(f"Found {len(city_restaurants_data)} city restaurants")
             logger.info("=== COMPLETED CITY RESTAURANT SEARCH ===")
         
-        # Process all restaurants with concurrent Groq processing
         logger.info("=== STARTING CONCURRENT GROQ PROCESSING ===")
         await process_all_restaurants(
             user_restaurants_data, 
@@ -438,7 +438,6 @@ async def create_search(search_data: SearchCreate, db: Session = Depends(get_db)
             db
         )
 
-        # Return complete search data
         result = await get_search(db_search.id, db)
         logger.info(f"Search {db_search.id} completed successfully")
         return result
