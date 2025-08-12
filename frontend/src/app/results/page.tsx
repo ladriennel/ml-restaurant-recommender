@@ -70,9 +70,9 @@ export default function Results() {
     }, []);
 
     return (
-        <div className="min-h-screen m-12 md:ml-32 md:mr-32 flex flex-col justify-center items-center">
+        <div className="min-h-screen m-12 md:ml-32 md:mr-32 flex flex-col items-center">
            <h1 className="text-foreground-1 text-center">Taste<br />Point</h1>
-           <h2 className="text-foreground-1 text-center">Here are 10 restaurant recommendations in order of best matched based on your location and list!</h2>
+           <h2 className="text-foreground-1 text-center">Here are your top 10 best matched restaurant recommendations based on your location and list!</h2>
            
            <div className="bg-background-2 w-3/4 min-h-[400px] mt-8 rounded-border-radius shadow-box-shadow p-6">
                {loading && (

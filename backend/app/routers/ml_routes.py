@@ -121,7 +121,8 @@ def generate_explanation(rec: RecommendationResult, rank: int) -> str:
         'cuisine': "cuisine",
         'description': "atmosphere and style",
         'tags': "atmosphere and style",
-        'menu': "menu offerings"
+        'menu': "menu offerings",
+        'price': "price level"
     }
     
     feature_explanations = set()

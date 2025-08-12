@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from typing import List, Dict, Optional, Tuple
 from sentence_transformers import SentenceTransformer
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
 import logging
@@ -17,15 +16,6 @@ logger = logging.getLogger(__name__)
 # ML Model Configuration Constants
 SENTENCE_MODEL_NAME = 'all-MiniLM-L6-v2'
 SENTENCE_EMBEDDING_DIM = 384  
-
-# TF-IDF Configuration Constants
-MENU_TFIDF_MAX_FEATURES = 300
-MENU_TFIDF_NGRAM_RANGE = (1, 5)
-TAGS_TFIDF_MAX_FEATURES = 150
-TAGS_TFIDF_NGRAM_RANGE = (1, 3)
-TFIDF_MAX_DF = 0.95
-TAGS_MAX_DF = 0.9
-TFIDF_MIN_DF = 1
 
 # Feature Processing Constants
 PRICE_SCALE_MIN = 1
@@ -73,32 +63,10 @@ class RestaurantRecommendationSystem:
         # Load pre-trained models
         self.sentence_model = SentenceTransformer(SENTENCE_MODEL_NAME)
         
-        # TF-IDF for menu highlights
-        self.menu_tfidf = TfidfVectorizer(
-            max_features=MENU_TFIDF_MAX_FEATURES,           
-            stop_words='english',
-            ngram_range=MENU_TFIDF_NGRAM_RANGE,         
-            lowercase=True,
-            token_pattern=r'[a-zA-Z-]{2,}', 
-            min_df=TFIDF_MIN_DF,                   
-            max_df=TFIDF_MAX_DF                
-        )
-        
-        # TF-IDF for tags 
-        self.tags_tfidf = TfidfVectorizer(
-            max_features=TAGS_TFIDF_MAX_FEATURES,          
-            stop_words='english', 
-            ngram_range=TAGS_TFIDF_NGRAM_RANGE,         
-            lowercase=True,
-            token_pattern=r'[a-zA-Z-]{2,}',  
-            min_df=TFIDF_MIN_DF,
-            max_df=TAGS_MAX_DF                  
-        )
-        
         # For feature scaling when combining different score types
         self.scaler = StandardScaler()
         
-        # Feature weights (more granular for better accuracy)
+        # Feature weights (rebalanced for semantic embeddings)
         self.feature_weights = {
             'cuisine': 0.18,      
             'price': 0.15,        
@@ -107,10 +75,6 @@ class RestaurantRecommendationSystem:
             'menu': 0.20,        
             'tags': 0.15
         }
-        
-        # Track if TF-IDF vectorizers are fitted
-        self.menu_tfidf_fitted = False
-        self.tags_tfidf_fitted = False
         
         logger.info("Restaurant recommendation system initialized for Groq data")
 
@@ -262,46 +226,50 @@ class RestaurantRecommendationSystem:
                 features.review_embeddings = np.zeros(SENTENCE_EMBEDDING_DIM)
 
     def process_menu_and_tags_features(self, features_list: List[RestaurantFeatures]) -> None:
-        """Process menu highlights and tags using TF-IDF for exact dish/tag matching"""
+        """Process menu highlights and tags using individual item embeddings for better semantic accuracy"""
         
-        logger.info("Processing menu highlights and tags with TF-IDF + embeddings")
-        
-        # Prepare menu highlights and tags data
-        menu_texts = []
-        tag_texts = []
-        
-        for features in features_list:
-            # Process menu highlights - join into text
-            menu_items = features.menu_highlights or []
-            menu_text = " ".join([str(item).lower().strip('"') for item in menu_items if item])
-            menu_texts.append(menu_text if menu_text else "food")
-            
-            # Process tags - join into text
-            tag_items = features.tags or []
-            tag_text = " ".join([str(tag).lower().strip('"') for tag in tag_items if tag])
-            tag_texts.append(tag_text if tag_text else "restaurant")
+        logger.info("Processing menu highlights and tags with individual item embeddings")
         
         try:
-            # Fit/transform TF-IDF for menu highlights
-            if not self.menu_tfidf_fitted:
-                menu_tfidf_matrix = self.menu_tfidf.fit_transform(menu_texts)
-                self.menu_tfidf_fitted = True
-            else:
-                menu_tfidf_matrix = self.menu_tfidf.transform(menu_texts)
-            
-            # Fit/transform TF-IDF for tags
-            if not self.tags_tfidf_fitted:
-                tags_tfidf_matrix = self.tags_tfidf.fit_transform(tag_texts)
-                self.tags_tfidf_fitted = True
-            else:
-                tags_tfidf_matrix = self.tags_tfidf.transform(tag_texts)
-            
-            
-            # Assign separate features to each restaurant
-            for i, features in enumerate(features_list):
-                # Store menu and tags embeddings 
-                features.menu_embeddings = menu_tfidf_matrix[i].toarray().flatten()
-                features.tags_embeddings = tags_tfidf_matrix[i].toarray().flatten()
+            # Process each restaurant's menu and tags individually
+            for features in features_list:
+                # Process menu highlights - embed each item separately
+                menu_items = features.menu_highlights or []
+                if menu_items:
+                    # Clean menu items
+                    clean_menu_items = [str(item).strip().strip('"') for item in menu_items if item and str(item).strip()]
+                    if clean_menu_items:
+                        # Generate embeddings for each menu item
+                        menu_embeddings = self.sentence_model.encode(
+                            clean_menu_items,
+                            convert_to_tensor=False,
+                            show_progress_bar=False
+                        )
+                        # Average all menu item embeddings to represent the restaurant's menu
+                        features.menu_embeddings = np.mean(menu_embeddings, axis=0)
+                    else:
+                        features.menu_embeddings = np.zeros(SENTENCE_EMBEDDING_DIM)
+                else:
+                    features.menu_embeddings = np.zeros(SENTENCE_EMBEDDING_DIM)
+                
+                # Process tags - embed each tag separately
+                tag_items = features.tags or []
+                if tag_items:
+                    # Clean tag items
+                    clean_tag_items = [str(tag).strip().strip('"') for tag in tag_items if tag and str(tag).strip()]
+                    if clean_tag_items:
+                        # Generate embeddings for each tag
+                        tag_embeddings = self.sentence_model.encode(
+                            clean_tag_items,
+                            convert_to_tensor=False,
+                            show_progress_bar=False
+                        )
+                        # Average all tag embeddings to represent the restaurant's characteristics
+                        features.tags_embeddings = np.mean(tag_embeddings, axis=0)
+                    else:
+                        features.tags_embeddings = np.zeros(SENTENCE_EMBEDDING_DIM)
+                else:
+                    features.tags_embeddings = np.zeros(SENTENCE_EMBEDDING_DIM)
                 
                 logger.debug(f"{features.name}: menu_items={len(features.menu_highlights)}, tags={len(features.tags)}, menu_dim={len(features.menu_embeddings)}, tags_dim={len(features.tags_embeddings)}")
                 
@@ -309,8 +277,8 @@ class RestaurantRecommendationSystem:
             logger.error(f"Error processing menu/tags: {e}")
             # Fallback to zero vectors
             for features in features_list:
-                features.menu_embeddings = np.zeros(MENU_TFIDF_MAX_FEATURES)
-                features.tags_embeddings = np.zeros(TAGS_TFIDF_MAX_FEATURES)
+                features.menu_embeddings = np.zeros(SENTENCE_EMBEDDING_DIM)
+                features.tags_embeddings = np.zeros(SENTENCE_EMBEDDING_DIM)
 
     def calculate_feature_similarities(
         self, 
@@ -376,32 +344,28 @@ class RestaurantRecommendationSystem:
                     review_sim = NEUTRAL_SIMILARITY_SCORE
                 scores['review'] = review_sim
                 
-                # 5. Menu similarity (TF-IDF)
+                # 5. Menu similarity (semantic embeddings)
                 if (city_restaurant.menu_embeddings is not None and 
                     user_restaurant.menu_embeddings is not None):
-                    if len(city_restaurant.menu_embeddings) == len(user_restaurant.menu_embeddings):
-                        menu_sim = cosine_similarity(
-                            [city_restaurant.menu_embeddings], 
-                            [user_restaurant.menu_embeddings]
-                        )[0][0]
-                        menu_sim = max(0, (menu_sim + 1) / 2)  # Ensure positive
-                    else:
-                        menu_sim = NEUTRAL_SIMILARITY_SCORE
+                    menu_sim = cosine_similarity(
+                        [city_restaurant.menu_embeddings], 
+                        [user_restaurant.menu_embeddings]
+                    )[0][0]
+                    # Convert from [-1, 1] to [0, 1]
+                    menu_sim = (menu_sim + COSINE_SIM_NORMALIZATION_OFFSET) / 2
                 else:
                     menu_sim = NEUTRAL_SIMILARITY_SCORE
                 scores['menu'] = menu_sim
                 
-                # 6. Tags similarity (TF-IDF)
+                # 6. Tags similarity (semantic embeddings)
                 if (city_restaurant.tags_embeddings is not None and 
                     user_restaurant.tags_embeddings is not None):
-                    if len(city_restaurant.tags_embeddings) == len(user_restaurant.tags_embeddings):
-                        tags_sim = cosine_similarity(
-                            [city_restaurant.tags_embeddings], 
-                            [user_restaurant.tags_embeddings]
-                        )[0][0]
-                        tags_sim = max(0, (tags_sim + 1) / 2)  # Ensure positive
-                    else:
-                        tags_sim = NEUTRAL_SIMILARITY_SCORE
+                    tags_sim = cosine_similarity(
+                        [city_restaurant.tags_embeddings], 
+                        [user_restaurant.tags_embeddings]
+                    )[0][0]
+                    # Convert from [-1, 1] to [0, 1]
+                    tags_sim = (tags_sim + COSINE_SIM_NORMALIZATION_OFFSET) / 2
                 else:
                     tags_sim = NEUTRAL_SIMILARITY_SCORE
                 scores['tags'] = tags_sim
