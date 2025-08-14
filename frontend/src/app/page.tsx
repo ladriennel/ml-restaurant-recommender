@@ -11,10 +11,10 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col gap-8 justify-center items-center bg-background-2 md:basis-2/3 py-16 md:py-0">
-          <div className="bg-background-1 w-11/12 md:h-1/2 md:w-2/3 text-center rounded-border-radius shadow-box-shadow p-8 flex flex-col justify-center">
+          <div className="bg-background-1 w-11/12 md:h-2/3 lg:h-1/2 md:w-2/3 text-center rounded-border-radius shadow-box-shadow p-8 flex flex-col justify-center">
             <h3 className="text-foreground-1 pb-4">How It Works</h3>
 
-            <div className="grid grid-cols-3 md:grid-cols-1 lg:grid-cols-3 gap-4 mb-6 md:mb-2 lg:mb-6">
+            <div className="grid grid-cols-3 md:grid-cols-1 lg:grid-cols-3 gap-2 mb-6 md:mb-2 lg:mb-6">
               <div className="flex flex-col md:flex-row lg:flex-col items-center">
                 <div className="text-2xl mb-2"/>
                 <h2 className="text-foreground-1 mb-2 min-h-[3rem] flex items-center">Choose Location</h2>
