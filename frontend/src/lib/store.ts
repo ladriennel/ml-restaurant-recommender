@@ -32,7 +32,7 @@ class AppStore {
     this.notifyListeners();
   }
 
-  updateRestaurant(index: number, restaurant: Restaurant): void {
+  updateRestaurant(index: number, restaurant: Restaurant | null): void {
     console.log(`Updating restaurant at index ${index}:`, restaurant);
     this.data.restaurants[index] = restaurant;
     this.notifyListeners();

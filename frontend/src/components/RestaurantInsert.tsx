@@ -9,12 +9,14 @@ type RestaurantInsertProps = {
     index: number;
     selectedRestaurant: Restaurant | null;
     onSelect: (index: number, restaurant: Restaurant) => void;
+    onClear?: (index: number) => void;
 };
 
 export default function RestaurantInsert({
     index,
     selectedRestaurant,
     onSelect,
+    onClear,
 }: RestaurantInsertProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [restaurantOptions, setRestaurantOptions] = useState<Restaurant[]>([]);
@@ -43,14 +45,30 @@ export default function RestaurantInsert({
 
     return (
         <>
-            <div
-                className="pl-4 pr-4 pt-2 pb-2 min-w-lg rounded-border-radius shadow-box-shadow bg-background-2 hover:bg-background-3 cursor-pointer transition"
-                onClick={() => setIsModalOpen(true)}
-            >
-                {selectedRestaurant ? (
-                    <p className="text-left text-foreground-2 text-base">{selectedRestaurant.name}</p>
-                ) : (
-                    <p className="text-center text-foreground-2 text-base">Choose a restaurant</p>
+            <div className="relative w-full max-w-lg mx-auto">
+                <div
+                    className={`w-full px-4 py-3 pr-12 rounded-border-radius shadow-box-shadow bg-background-2 transition-all duration-200 ${
+                        selectedRestaurant 
+                        ? 'cursor-default' 
+                        : 'hover:bg-background-3 cursor-pointer'
+                    }`}
+                    onClick={selectedRestaurant ? undefined : () => setIsModalOpen(true)}
+                >
+                    {selectedRestaurant ? (
+                        <p className="text-left text-foreground-2 text-base truncate">{selectedRestaurant.name}</p>
+                    ) : (
+                        <p className="text-center text-foreground-2 text-base">Choose a restaurant</p>
+                    )}
+                </div>
+                
+                {selectedRestaurant && onClear && (
+                    <Button
+                        variant="tertiary"
+                        onClick={() => onClear(index)}
+                        className="absolute top-1/2 right-2 -translate-y-1/2 hover:scale-110 transition-transform duration-200"
+                    >
+                        ✕
+                    </Button>
                 )}
             </div>
 

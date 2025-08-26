@@ -37,7 +37,7 @@ export default function Home() {
             <div>
               <h4 className="text-foreground-1 mb-2">Tech Stack</h4>
               <h4 className="text-sm text-foreground-2">
-                FastAPI + Next.js • PostgreSQL • Sentence Transformers • TomTom API • Groq LLM
+                FastAPI + Next.js • PostgreSQL • Sentence Transformers • TomTom API • GeoDB API
               </h4>
             </div>
           </div>

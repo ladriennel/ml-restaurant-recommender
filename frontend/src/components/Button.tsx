@@ -5,10 +5,10 @@ import React from 'react';
 
 type ButtonProps = {
   children: React.ReactNode;
-  href?: string; // optional page route
-  onClick?: () => void; // for modal or custom actions
+  href?: string; 
+  onClick?: () => void; 
   className?: string;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'tertiary';
 };
 
 export default function Button({
@@ -32,9 +32,22 @@ export default function Button({
   const primaryStyles =
     'w-[185px] h-[50px] bg-background-2 hover:bg-background-3 rounded-border-radius shadow-box-shadow';
   const secondaryStyles = 'underline';
+  const tertiaryStyles = 'w-8 h-8 bg-background-2 hover:bg-background-3 rounded-full flex items-center justify-center';
 
-  const combinedStyles = `${baseStyles} ${variant === 'primary' ? primaryStyles : secondaryStyles
-    } ${className}`;
+  const getVariantStyles = () => {
+    switch (variant) {
+      case 'primary':
+        return primaryStyles;
+      case 'secondary':
+        return secondaryStyles;
+      case 'tertiary':
+        return tertiaryStyles;
+      default:
+        return primaryStyles;
+    }
+  };
+
+  const combinedStyles = `${baseStyles} ${getVariantStyles()} ${className}`;
 
   return (
     <button onClick={handleClick} className={combinedStyles}>

@@ -47,6 +47,16 @@ export default function Restaurants() {
         console.log('Current selectedRestaurants:', updated);
     };
 
+    const handleRestaurantClear = (index: number) => {
+        const updated = [...selectedRestaurants];
+        updated[index] = null;
+        setSelectedRestaurants(updated);
+        store.updateRestaurant(index, null);
+
+        console.log(`Cleared restaurant at index ${index}`);
+        console.log('Current selectedRestaurants:', updated);
+    };
+
     const handleFindRestaurants = async () => {
         const currentData = store.getAllData();
         console.log('Saving to database - Location:', currentData.location);
@@ -135,16 +145,17 @@ export default function Restaurants() {
     };
 
     return (
-        <div className="min-h-screen m-12 md:ml-32 md:mr-32 flex flex-col items-center">
+        <div className="min-h-screen px-4 sm:px-8 md:px-16 lg:px-32 py-12 flex flex-col items-center">
             <h1 className="text-foreground-1 text-center">Taste<br />Point</h1>
-            <h2 className="text-foreground-1 text-center">List up to 5 restaurants that are on your mind,<br />and we'll find the best matches in your area!</h2>
-            <div className="mt-8 flex flex-col gap-6">
+            <h2 className="text-foreground-1 text-center max-w-2xl">List up to 5 restaurants that are on your mind,<br />and we'll find the best matches in your area!</h2>
+            <div className="mt-8 w-full max-w-2xl flex flex-col gap-6">
                 {selectedRestaurants.map((restaurant, index) => (
                     <RestaurantInsert
                         key={index}
                         index={index}
                         selectedRestaurant={restaurant}
                         onSelect={handleRestaurantSelect}
+                        onClear={handleRestaurantClear}
                     />
                 ))}
             </div>
