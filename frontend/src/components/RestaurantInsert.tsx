@@ -47,7 +47,7 @@ export default function RestaurantInsert({
         <>
             <div className="relative w-full max-w-lg mx-auto">
                 <div
-                    className={`w-full px-4 py-3 pr-12 rounded-border-radius shadow-box-shadow bg-background-2 transition-all duration-200 ${
+                    className={`w-full px-4 py-3 rounded-border-radius shadow-box-shadow bg-background-2 transition-all duration-200 ${
                         selectedRestaurant 
                         ? 'cursor-default' 
                         : 'hover:bg-background-3 cursor-pointer'

@@ -30,7 +30,7 @@ export default function Home() {
               <div className="flex flex-col md:flex-row lg:flex-col items-center">
                 <div className="text-2xl mb-2"/>
                 <h2 className="text-foreground-1 mb-2 min-h-[3rem] flex items-center">Get AI Matches</h2>
-                <h4 className="text-sm text-foreground-2 min-h-[3rem] flex items-center text-center">ML algorithms find similar restaurants nearby</h4>
+                <h4 className="text-sm text-foreground-2 min-h-[3rem] flex items-center text-center">ML algorithm finds similar restaurants nearby</h4>
               </div>
             </div>
 
