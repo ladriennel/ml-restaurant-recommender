@@ -1,16 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Average+Sans&family=Merriweather:ital,wght@1,700&family=Merriweather+Sans&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Average+Sans&family=Merriweather:ital,wght@1,700&family=Merriweather+Sans:wght@300;400&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background-1: #D7E4E6;
-  --background-2: #FFFFFF;
-  --background-3: #D9D9D9;
+  --background-1: #fff6e5;
+  --background-2: #ffffff;
+  --background-3: #e6d6b8;
 
-  --foreground-1: #000000;
-  --foreground-2: #818586;
+  --foreground-1: #3f3f3f;
+  --foreground-2: #9a8f82;
 
-  --border-radius: 15px;
-  --box-shadow: 0px 0px 10px 4px rgba(0, 0, 0, 0.25);
+  --accent-1: #7eb691;
+  --accent-2: #f2c66d;
+
+  --border-radius: 10px;
+  --box-shadow: 0px 2px 14px 0px rgba(63, 63, 63, 0.10);
 }
 
 @theme {
@@ -22,6 +25,10 @@
   /* FOREGROUND */
   --color-foreground-1: var(--foreground-1);
   --color-foreground-2: var(--foreground-2);
+
+  /* ACCENT */
+  --color-accent-1: var(--accent-1);
+  --color-accent-2: var(--accent-2);
 
   --radius-border-radius: var(--border-radius);
   --shadow-box-shadow: var(--box-shadow);
@@ -41,30 +48,37 @@ body {
 h1,
 .h1 {
   font-family: 'Merriweather', serif;
-  font-size: 64px;
+  font-size: clamp(40px, 8vw, 64px);
   font-style: italic;
-  font-weight: 400;
-  line-height: normal;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 h2,
 .h2 {
   font-family: 'Merriweather Sans', sans-serif;
-  font-size: 20px;
+  font-size: clamp(14px, 2.2vw, 20px);
   font-weight: 300;
-  letter-spacing: 2px;
+  letter-spacing: clamp(1px, 0.25vw, 2px);
 }
 
 h3,
 .h3 {
   font-family: 'Average Sans', sans-serif;
-  font-size: 28px;
-  font-weight: 300;
+  font-size: 22px;
+  font-weight: 400;
+}
+
+h4,
+.h4 {
+  font-family: 'Average Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
 }
 
 p,
 .p {
   font-family: 'Average Sans', sans-serif;
-  font-size: 20px;
-  font-weight: 300;
+  font-size: 18px;
+  font-weight: 400;
 }

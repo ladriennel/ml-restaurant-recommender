@@ -198,7 +198,7 @@ async def search_city_restaurants(
     
     if not category_ids:
         category_ids = {7315}
-    else:
+    elif len(category_ids) > 1:
         category_ids.discard(7315)
 
     category_set_str = ",".join(map(str, category_ids))

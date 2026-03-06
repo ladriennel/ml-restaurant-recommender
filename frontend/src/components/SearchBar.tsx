@@ -25,7 +25,7 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
       return;
     }
     const timeout = setTimeout(async () => {
-      if (query.length >= 1) { 
+      if (query.length >= 1) {
         setError(null);
 
         if (cache[query]) {
@@ -35,7 +35,7 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
         }
 
         setLoading(true);
-        setShowDropdown(true); 
+        setShowDropdown(true);
 
         const requestId = ++currentRequestRef.current;
         try {
@@ -58,14 +58,13 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
           }
         }
       } else {
-        // Clear results and hide dropdown for empty queries
         setResults([]);
         setShowDropdown(false);
         setLoading(false);
         setError(null);
         currentRequestRef.current++;
       }
-    }, 800); // debounce
+    }, 800);
 
     return () => clearTimeout(timeout);
   }, [query, cache, onSearch]);
@@ -79,7 +78,7 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
     setError(null);
   };
 
-  const baseStyle = 'text-base text-foreground-2 px-4 py-2 hover:bg-background-3 truncate overflow-x-auto cursor-pointer';
+  const baseStyle = 'text-base text-foreground-1 px-4 py-2.5 hover:bg-background-1 truncate overflow-x-auto cursor-pointer';
 
   return (
     <div className="relative w-full max-w-md pt-4">
@@ -88,20 +87,20 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
         value={query}
         placeholder={placeholder}
         onChange={(e) => {
-          setQuery(e.target.value)
+          setQuery(e.target.value);
           if (isSelected) setIsSelected(false);
         }}
-        className="text-base text-foreground-2 w-full h-[50px] pl-4 pr-4 pt-2 pb-2 bg-background-2 rounded-border-radius shadow-box-shadow focus:outline-none"
+        className="text-base text-foreground-1 placeholder:text-foreground-2 w-full h-[50px] pl-4 pr-4 pt-2 pb-2 bg-background-1 border border-background-3 rounded-border-radius shadow-box-shadow focus:outline-none focus:border-accent-1 transition-colors"
       />
 
       {showDropdown && query.length >= 1 && (
-        <ul className="absolute z-10 mt-1 w-full bg-background-2 rounded-border-radius shadow-box-shadow overflow-y-auto">
+        <ul className="absolute z-10 mt-1 w-full bg-background-2 border border-background-3 rounded-border-radius shadow-box-shadow overflow-y-auto">
           {loading ? (
-            <li className={`${baseStyle}`}>Loading</li>
+            <li className={`${baseStyle} text-foreground-2`}>Loading...</li>
           ) : error ? (
-            <li className={`${baseStyle} text-red-500`}>{error}</li>
+            <li className={`${baseStyle} text-red-400`}>{error}</li>
           ) : results.length === 0 ? (
-            <li className={`${baseStyle}`}>No results found</li>
+            <li className={`${baseStyle} text-foreground-2`}>No results found</li>
           ) : (
             results.map((result, i) => (
               <li
@@ -109,15 +108,14 @@ export default function SearchBar({ placeholder = 'Search', onSearch, onSelect }
                 className={`${baseStyle}`}
                 onClick={() => handleSelect(result)}
               >
-                
-                  {result.includes('\n') ? (
-                    <>
-                      <div className="font-bold truncate">{result.split('\n')[0]}</div>
-                      <div className="text-sm truncate">{result.split('\n')[1]}</div>
-                    </>
-                  ) : (
-                    result
-                  )}
+                {result.includes('\n') ? (
+                  <>
+                    <div className="font-medium truncate">{result.split('\n')[0]}</div>
+                    <div className="text-sm text-foreground-2 truncate">{result.split('\n')[1]}</div>
+                  </>
+                ) : (
+                  result
+                )}
               </li>
             ))
           )}

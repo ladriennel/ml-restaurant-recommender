@@ -5,8 +5,8 @@ import React from 'react';
 
 type ButtonProps = {
   children: React.ReactNode;
-  href?: string; 
-  onClick?: () => void; 
+  href?: string;
+  onClick?: () => void;
   className?: string;
   variant?: 'primary' | 'secondary' | 'tertiary';
 };
@@ -28,11 +28,11 @@ export default function Button({
     }
   };
 
-  const baseStyles = 'text-foreground-2 transition cursor-pointer';
+  const baseStyles = 'transition-colors duration-200 cursor-pointer';
   const primaryStyles =
-    'w-[185px] h-[50px] bg-background-2 hover:bg-background-3 rounded-border-radius shadow-box-shadow';
-  const secondaryStyles = 'underline';
-  const tertiaryStyles = 'w-8 h-8 bg-background-2 hover:bg-background-3 rounded-full flex items-center justify-center';
+    'w-[185px] h-[50px] bg-accent-1 hover:bg-[#6ba37e] text-white rounded-border-radius font-medium tracking-wide';
+  const secondaryStyles = 'text-foreground-1 underline hover:text-foreground-2';
+  const tertiaryStyles = 'w-8 h-8 bg-background-3 hover:bg-[#d4c4a0] text-foreground-1 rounded-full flex items-center justify-center text-sm';
 
   const getVariantStyles = () => {
     switch (variant) {
