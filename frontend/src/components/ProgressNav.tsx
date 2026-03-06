@@ -53,14 +53,25 @@ export default function ProgressNav() {
   };
 
   return (
-    <nav className="w-full bg-background-2 border-b border-background-3 px-6 md:px-16 py-3.5 shrink-0">
-      <div className="flex items-center max-w-sm mx-auto">
+    <nav className="w-full bg-background-2 border-b border-background-3 px-6 md:px-16 py-5 shrink-0">
+      <div className="flex items-center max-w-sm mx-auto relative">
+        <button
+          onClick={() => router.push('/')}
+          className="absolute -left-12 flex items-center justify-center w-8 h-8 rounded transition-colors duration-200 hover:bg-accent-1/10 text-foreground-2 hover:text-accent-1 cursor-pointer"
+          aria-label="Home"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+            <path d="M10.707 2.293a1 1 0 0 0-1.414 0l-7 7A1 1 0 0 0 3 11h1v6a1 1 0 0 0 1 1h4v-4h2v4h4a1 1 0 0 0 1-1v-6h1a1 1 0 0 0 .707-1.707l-7-7Z" />
+          </svg>
+        </button>
         {steps.map((step, i) => (
           <div key={step.href} className={`flex items-center ${i < steps.length - 1 ? 'flex-1' : ''}`}>
             <button
               onClick={() => canNavigate(i) && router.push(step.href)}
-              className={`flex items-center gap-1.5 shrink-0 transition-all duration-200 ${
-                canNavigate(i) ? 'cursor-pointer' : 'cursor-default'
+              className={`flex items-center gap-1.5 shrink-0 transition-all duration-200 rounded px-2 py-1 ${
+                canNavigate(i)
+                  ? 'cursor-pointer hover:bg-accent-1/10'
+                  : 'cursor-default'
               } ${
                 !canNavigate(i) && i !== currentIndex && i > currentIndex ? 'opacity-35' : ''
               }`}
@@ -79,7 +90,7 @@ export default function ProgressNav() {
             )}
           </div>
         ))}
-      </div>
+        </div>
     </nav>
   );
 }
