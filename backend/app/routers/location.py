@@ -8,7 +8,7 @@ import time
 from threading import Lock
 import logging
 
-from search_utils import parse_location_query, matches_region, get_search_prefix, fuzzy_filter
+from utils.search_utils import parse_location_query, matches_region, get_search_prefix, fuzzy_filter
 
 logger = logging.getLogger(__name__)
 

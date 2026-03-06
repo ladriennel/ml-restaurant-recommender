@@ -1,7 +1,7 @@
 from difflib import SequenceMatcher
 from typing import List, TypeVar, Callable, Tuple
 
-from constants import REGION_ABBREVS, KNOWN_REGION_NAMES
+from utils.constants import REGION_ABBREVS, KNOWN_REGION_NAMES
 
 T = TypeVar('T')
 

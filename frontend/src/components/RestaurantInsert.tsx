@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import SearchBar from './SearchBar';
 import Button from './Button';
 import { Restaurant } from '@/types';
+import { store } from '@/lib/store';
 
 type RestaurantInsertProps = {
     index: number;
@@ -86,7 +87,11 @@ export default function RestaurantInsert({
                                 placeholder="Search restaurants"
                                 onSearch={async (query) => {
                                     try {
-                                        const res = await fetch(`http://localhost:8000/api/restaurants/search?query=${encodeURIComponent(query)}`);
+                                        const location = store.getLocation();
+                                        const coords = location
+                                            ? `&lat=${location.latitude}&lon=${location.longitude}`
+                                            : '';
+                                        const res = await fetch(`http://localhost:8000/api/restaurants/search?query=${encodeURIComponent(query)}${coords}`);
 
                                         if (!res.ok) {
                                             if (res.status === 429) {

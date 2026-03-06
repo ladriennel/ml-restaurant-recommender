@@ -5,8 +5,8 @@ from typing import List, Set
 from database import get_db
 from models import Search, Restaurant as RestaurantModel, CityRestaurant as CityRestaurantModel, RestaurantDetails
 from schemas import SearchCreate, SearchResponse, RestaurantResponse, CityRestaurantResponse, RestaurantDetailsResponse
-from city_restaurant import search_city_restaurants
-from groq_service import get_restaurant_details
+from services.city_restaurant import search_city_restaurants
+from services.groq_service import get_restaurant_details
 import json
 import asyncio
 import logging

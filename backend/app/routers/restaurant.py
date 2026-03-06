@@ -4,11 +4,11 @@ import os
 import requests
 from dotenv import load_dotenv
 import time
-from typing import List, Dict
+from typing import List, Dict, Optional
 from threading import Lock
 import logging
 
-from search_utils import fuzzy_filter
+from utils.search_utils import fuzzy_filter
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +25,17 @@ MIN_REQUEST_INTERVAL = 1
 request_lock = Lock()
 
 @router.get("/restaurants/search")
-async def search_restaurants(query: str = Query(..., min_length=1)) -> List[Dict]:
+async def search_restaurants(
+    query: str = Query(..., min_length=1),
+    lat: Optional[float] = Query(None),
+    lon: Optional[float] = Query(None),
+) -> List[Dict]:
 
     global last_request_time
 
-    # Check cache
-    if query in cache:
-        return cache[query]
+    cache_key = f"{query}:{lat}:{lon}"
+    if cache_key in cache:
+        return cache[cache_key]
 
     with request_lock:
         current_time = time.time()
@@ -43,10 +47,12 @@ async def search_restaurants(query: str = Query(..., min_length=1)) -> List[Dict
         url = f"{TOMTOM_BASE_URL}/{query}.json"
         params = {
             "key": TOMTOM_API_KEY,
-            "limit": 10,
-            "language":"en-US",
+            "limit": 30,
+            "language": "en-US",
             "typeahead": True,
-            "categorySet": "7315",  
+            "categorySet": "7315",
+            "lat": lat if lat is not None else 39.8283,
+            "lon": lon if lon is not None else -98.5795,
         }
 
         try:
@@ -54,13 +60,11 @@ async def search_restaurants(query: str = Query(..., min_length=1)) -> List[Dict
             last_request_time = time.time()
 
             if response.status_code == 429:
-                logger.warning("Rate limited for city restaurant search")
-                # Return empty list instead of JSONResponse
+                logger.warning("Rate limited for restaurant search")
                 return []
 
             if response.status_code != 200:
-                logger.error(f"TomTom API error for city search: {response.status_code}")
-                # Return empty list instead of JSONResponse
+                logger.error(f"TomTom API error: {response.status_code}")
                 return []
             
             data = response.json()
@@ -91,10 +95,10 @@ async def search_restaurants(query: str = Query(..., min_length=1)) -> List[Dict
                 query,
                 results,
                 key_fn=lambda r: r['name'],
-                threshold=0.35,
+                threshold=0.3,
             )
 
-            cache[query] = results
+            cache[cache_key] = results
             return results
 
         except requests.exceptions.Timeout:

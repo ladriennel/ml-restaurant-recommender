@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from database import get_db
 from models import Restaurant as RestaurantModel, CityRestaurant as CityRestaurantModel
-from ml_recommendations import recommendation_system, RecommendationResult
+from services.ml_recommendations import recommendation_system, RecommendationResult
 from pydantic import BaseModel
 import logging
 
