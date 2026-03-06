@@ -8,6 +8,8 @@ from typing import List, Dict
 from threading import Lock
 import logging
 
+from search_utils import fuzzy_filter
+
 logger = logging.getLogger(__name__)
 
 load_dotenv()
@@ -84,6 +86,13 @@ async def search_restaurants(query: str = Query(..., min_length=1)) -> List[Dict
                 }
                 
                 results.append(restaurant)
+
+            results = fuzzy_filter(
+                query,
+                results,
+                key_fn=lambda r: r['name'],
+                threshold=0.35,
+            )
 
             cache[query] = results
             return results

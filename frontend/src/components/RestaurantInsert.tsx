@@ -72,7 +72,7 @@ export default function RestaurantInsert({
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 bg-[rgba(63,63,63,0.45)] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-50 bg-[rgba(63,63,63,0.45)] flex items-start justify-center pt-16 px-4">
                     <div className="bg-background-2 rounded-border-radius shadow-box-shadow w-full max-w-sm flex flex-col">
                         <div className="flex items-center justify-between px-6 py-4 border-b border-background-3">
                             <h3 className="text-foreground-1">Find a Restaurant</h3>
